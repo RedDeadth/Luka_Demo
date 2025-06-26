@@ -8,6 +8,7 @@ import 'coupons_screen.dart';
 import 'store_screen.dart';
 import 'missions_screen.dart';
 import 'profile_screen.dart';
+import 'qrscanscreen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -18,7 +19,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  int _notificationCount = 4; // Número de notificaciones nuevas
+  int _notificationCount = 4; 
+  double _lukaPoints = 1.5;
 
   @override
   Widget build(BuildContext context) {
@@ -329,7 +331,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
-          onTap: (index) {
+          onTap: (index) async {
             setState(() {
               _selectedIndex = index;
             });
@@ -346,10 +348,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
                 break;
               case 2:
-                // QR Scanner - próximamente
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('QR Scanner - Próximamente')),
+                // QR Scanner - Implementación completa
+                final result = await Navigator.push<int>(
+                  context,
+                  MaterialPageRoute(builder: (context) => const QRScannerScreen()),
                 );
+                
+                // Si se escaneó correctamente y se retornaron puntos
+                if (result != null && result > 0) {
+                  _addLukaPoints(result.toDouble());
+                  _addQRTransaction(); // Agregar transacción a la lista
+                }
                 break;
               case 3:
                 Navigator.push(
@@ -431,6 +440,30 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+  // Nuevos métodos para manejar los puntos
+  void _addLukaPoints(double points) {
+    setState(() {
+      _lukaPoints += points;
+    });
+  }
+
+  String _formatLukaPoints(double points) {
+    if (points >= 1000000) {
+      return '${(points / 1000000).toStringAsFixed(1)}M';
+    } else if (points >= 1000) {
+      return '${(points / 1000).toStringAsFixed(1)}K';
+    } else {
+      return points.toStringAsFixed(0);
+    }
+  }
+
+  void _addQRTransaction() {
+    // Aquí podrías agregar la transacción a una lista si lo manejas dinámicamente
+    // Por ahora solo actualizamos el contador de notificaciones
+    setState(() {
+      _notificationCount++;
+    });
   }
 
   // Resto de métodos existentes...
@@ -518,8 +551,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
-  }
-
+  }  
   List<NotificationItemData> _getNotifications() {
     return [
       NotificationItemData(
