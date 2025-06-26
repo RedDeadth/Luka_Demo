@@ -90,7 +90,10 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
           const SizedBox(height: 8),
           Text(
             'Agrega productos para comenzar',
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade500,
+            ),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
@@ -142,9 +145,9 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
             ],
           ),
         ),
-
+        
         const SizedBox(height: 8),
-
+        
         // Lista de productos en el carrito
         Expanded(
           child: ListView.builder(
@@ -190,9 +193,9 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
               ),
             ),
           ),
-
+          
           const SizedBox(width: 16),
-
+          
           // Información del producto
           Expanded(
             child: Column(
@@ -225,14 +228,17 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
                     ),
                     const Text(
                       ' c/u',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-
+          
           // Controles de cantidad
           Column(
             children: [
@@ -254,7 +260,7 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
                       ),
                     ),
                   ),
-
+                  
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
@@ -265,7 +271,7 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
                       ),
                     ),
                   ),
-
+                  
                   GestureDetector(
                     onTap: () => _increaseQuantity(index),
                     child: Container(
@@ -284,9 +290,9 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
                   ),
                 ],
               ),
-
+              
               const SizedBox(height: 8),
-
+              
               // Total por producto
               Row(
                 children: [
@@ -308,9 +314,9 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
               ),
             ],
           ),
-
+          
           const SizedBox(width: 8),
-
+          
           // Botón eliminar
           GestureDetector(
             onTap: () => _removeItem(index),
@@ -383,7 +389,7 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
                 ),
               ],
             ),
-
+            
             if (!_canAfford) ...[
               const SizedBox(height: 8),
               Text(
@@ -395,9 +401,9 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
                 ),
               ),
             ],
-
+            
             const SizedBox(height: 16),
-
+            
             // Botón de comprar
             SizedBox(
               width: double.infinity,
@@ -448,9 +454,12 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
 
   void _processPayment() async {
     if (_canAfford && _cartItems.isNotEmpty) {
+      // IMPORTANTE: Calcular el total ANTES de limpiar el carrito
+      final totalToPay = _totalAmount;
+      
       // Crear copia de los items comprados antes de limpiar el carrito
       final purchasedItems = List<CartItem>.from(_cartItems);
-      final newBalance = _userBalance - _totalAmount;
+      final newBalance = _userBalance - totalToPay;
       final transactionId = _generateTransactionId();
 
       // Actualizar saldo local
@@ -461,23 +470,22 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
 
       // Actualizar carrito en el padre
       widget.onUpdateCart([]);
-
+      
       // Llamar callback para actualizar saldo en HomeScreen si existe
       if (widget.onBalanceUpdated != null) {
         widget.onBalanceUpdated!(newBalance);
       }
 
-      // Navegar al voucher de compra
+      // Navegar al voucher de compra usando el total calculado antes de limpiar
       await Navigator.push(
         context,
         MaterialPageRoute(
-          builder:
-              (context) => PurchaseSuccessVoucherScreen(
-                purchasedItems: purchasedItems,
-                totalAmount: _totalAmount,
-                newBalance: newBalance,
-                transactionId: transactionId,
-              ),
+          builder: (context) => PurchaseSuccessVoucherScreen(
+            purchasedItems: purchasedItems,
+            totalAmount: totalToPay, // Usar el total calculado antes de limpiar
+            newBalance: newBalance,
+            transactionId: transactionId,
+          ),
         ),
       );
 
