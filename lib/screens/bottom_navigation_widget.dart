@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
-import 'campaigns_screen.dart';
+import 'RankingScreen.dart';
 import 'store_screen.dart';
 import 'profile_screen.dart';
 
@@ -57,7 +57,7 @@ class CustomBottomNavigation extends StatelessWidget {
               height: 24,
               color: currentIndex == 1 ? Colors.blue : (isDarkMode ? Colors.grey.shade400 : Colors.grey),
             ),
-            label: 'Campañas',
+            label: 'Ranking', // Cambiado de 'Campañas' a 'Ranking'
           ),
           BottomNavigationBarItem(
             icon: Container(
@@ -113,7 +113,7 @@ class CustomBottomNavigation extends StatelessWidget {
         if (currentIndex != 1) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const CampaignsScreen()),
+            MaterialPageRoute(builder: (context) => const RankingScreen()),
           );
         }
         break;

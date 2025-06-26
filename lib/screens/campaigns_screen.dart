@@ -87,7 +87,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
                 MaterialPageRoute(
                   builder: (context) => const CampaignDetailScreen(
                     title: 'Donación de Ropa para Comunidades',
-                    logo: 'donacion_ropa.jpg',
+                    logo: 'images (3).jpg',
                     description: 'Ayuda a familias necesitadas donando ropa en buen estado. Tu contribución puede hacer la diferencia en la vida de muchas personas.',
                     targetAmount: '5000',
                     currentAmount: '3200',
@@ -104,7 +104,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
               5000,
               15,
               127,
-              'donacion_ropa.jpg',
+              'images (3).jpg',
               Colors.blue,
             ),
           ),
@@ -119,7 +119,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
                 MaterialPageRoute(
                   builder: (context) => const CampaignDetailScreen(
                     title: 'Limpieza de Playas',
-                    logo: 'limpieza_playas.png',
+                    logo: 'logo OFICIAL azul 2023 (1)_Mesa de trabajo 1 copia 4.png',
                     description: 'Únete a nuestra campaña de limpieza de playas y ayuda a proteger el medio ambiente. Juntos podemos hacer un cambio.',
                     targetAmount: '3000',
                     currentAmount: '1800',
@@ -136,7 +136,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
               3000,
               8,
               89,
-              'limpieza_playas.png',
+              'logo OFICIAL azul 2023 (1)_Mesa de trabajo 1 copia 4.png',
               Colors.green,
             ),
           ),
@@ -151,7 +151,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
                 MaterialPageRoute(
                   builder: (context) => const CampaignDetailScreen(
                     title: 'Educación para Niños',
-                    logo: 'educacion_ninos.png',
+                    logo: 'southernPerucuadrado.png',
                     description: 'Apoya la educación de niños en zonas rurales. Tu donación ayudará a comprar materiales escolares y libros.',
                     targetAmount: '8000',
                     currentAmount: '4500',
@@ -168,7 +168,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
               8000,
               22,
               203,
-              'educacion_ninos.png',
+              'southernPerucuadrado.png',
               Colors.orange,
             ),
           ),
@@ -183,7 +183,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
                 MaterialPageRoute(
                   builder: (context) => const CampaignDetailScreen(
                     title: 'Reforestación Urbana',
-                    logo: 'reforestacion.png',
+                    logo: 'tt.png',
                     description: 'Ayuda a plantar árboles en la ciudad para mejorar la calidad del aire y crear espacios verdes.',
                     targetAmount: '6000',
                     currentAmount: '2100',
@@ -200,7 +200,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
               6000,
               30,
               156,
-              'reforestacion.png',
+              'tt.png',
               Colors.teal,
             ),
           ),

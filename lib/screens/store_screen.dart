@@ -297,7 +297,7 @@ class _StoreScreenState extends State<StoreScreen> with TickerProviderStateMixin
         id: '1',
         name: 'MENÚ',
         price: 12.0,
-        imagePath: 'assets/images/menu.png',
+        imagePath: 'assets/images/Menu.png',
         category: 'Comidas',
       ),
       Product(
@@ -330,7 +330,7 @@ class _StoreScreenState extends State<StoreScreen> with TickerProviderStateMixin
         id: '5',
         name: 'Coca Cola',
         price: 8.0,
-        imagePath: 'assets/images/coca_cola.png',
+        imagePath: 'assets/images/cocacola.png',
         category: 'Bebidas',
       ),
       Product(
@@ -344,7 +344,7 @@ class _StoreScreenState extends State<StoreScreen> with TickerProviderStateMixin
         id: '7',
         name: 'Agua Mineral',
         price: 5.0,
-        imagePath: 'assets/images/agua.png',
+        imagePath: 'assets/images/aguamineral.png',
         category: 'Bebidas',
       ),
       Product(

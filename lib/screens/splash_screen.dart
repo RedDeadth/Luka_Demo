@@ -14,6 +14,7 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  late Animation<Color?> _textColorAnimation;
 
   @override
   void initState() {
@@ -40,6 +41,14 @@ class _SplashScreenState extends State<SplashScreen>
       curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
     ));
 
+    _textColorAnimation = ColorTween(
+      begin: Colors.white.withOpacity(0.3),
+      end: Colors.white,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: const Interval(0.4, 0.8, curve: Curves.easeInOut),
+    ));
+
     _startAnimation();
   }
 
@@ -62,6 +71,10 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenHeight < 600;
+
     return GestureDetector(
       onTap: () {
         Navigator.of(context).pushReplacement(
@@ -98,6 +111,7 @@ class _SplashScreenState extends State<SplashScreen>
                   opacity: 0.3,
                   child: Image.asset(
                     'assets/images/vector2.png',
+                    width: screenWidth * 0.7,
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -109,82 +123,129 @@ class _SplashScreenState extends State<SplashScreen>
                   opacity: 0.3,
                   child: Image.asset(
                     'assets/images/vector1.png',
+                    width: screenWidth * 0.7,
                     fit: BoxFit.contain,
                   ),
                 ),
               ),
-              AnimatedBuilder(
-                animation: _animationController,
-                builder: (context, child) {
-                  return Opacity(
-                    opacity: _fadeAnimation.value,
-                    child: Transform.scale(
-                      scale: _scaleAnimation.value,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 40),
-                            child: Image.asset(
-                              'assets/images/logo.png',
-                              width: 120,
-                              height: 120,
-                              fit: BoxFit.contain,
+              Center( // Añadido widget Center para asegurar el centrado absoluto
+                child: AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) {
+                    return Opacity(
+                      opacity: _fadeAnimation.value,
+                      child: Transform.scale(
+                        scale: _scaleAnimation.value,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center, // Asegura centrado horizontal
+                          children: [
+                            Container(
+                              margin: EdgeInsets.only(bottom: isSmallScreen ? 20 : 40),
+                              child: Image.asset(
+                                'assets/images/logo2.png',
+                                width: isSmallScreen ? 80 : 120,
+                                height: isSmallScreen ? 80 : 120,
+                                fit: BoxFit.contain,
+                              ),
                             ),
-                          ),
-                          const SizedBox(
-                            width: 30,
-                            height: 30,
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              strokeWidth: 3,
+                            SizedBox(
+                              width: isSmallScreen ? 20 : 30,
+                              height: isSmallScreen ? 20 : 30,
+                              child: CircularProgressIndicator(
+                                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                                strokeWidth: 3,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 40),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 40),
-                            child: Column(
-                              children: [
-                                Text(
-                                  'Encaminando',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w300,
-                                    letterSpacing: 1.2,
-                                  ),
-                                  textAlign: TextAlign.center,
+                            SizedBox(height: isSmallScreen ? 20 : 40),
+                            ConstrainedBox( // Añadido para limitar el ancho del texto
+                              constraints: BoxConstraints(
+                                maxWidth: screenWidth * 0.8, // Limita el ancho máximo
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20), // Padding consistente
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    AnimatedBuilder(
+                                      animation: _textColorAnimation,
+                                      builder: (context, child) {
+                                        return Text(
+                                          'Encaminando',
+                                          style: TextStyle(
+                                            color: _textColorAnimation.value,
+                                            fontSize: isSmallScreen ? 20 : 24,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 1.5,
+                                            shadows: [
+                                              Shadow(
+                                                blurRadius: 10,
+                                                color: Colors.black.withOpacity(0.2),
+                                                offset: const Offset(2, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        );
+                                      },
+                                    ),
+                                    SizedBox(height: isSmallScreen ? 6 : 8),
+                                    AnimatedBuilder(
+                                      animation: _textColorAnimation,
+                                      builder: (context, child) {
+                                        return Text(
+                                          'la sostenibilidad',
+                                          style: TextStyle(
+                                            color: _textColorAnimation.value,
+                                            fontSize: isSmallScreen ? 20 : 24,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 1.5,
+                                            shadows: [
+                                              Shadow(
+                                                blurRadius: 10,
+                                                color: Colors.black.withOpacity(0.2),
+                                                offset: const Offset(2, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        );
+                                      },
+                                    ),
+                                    SizedBox(height: isSmallScreen ? 6 : 8),
+                                    AnimatedBuilder(
+                                      animation: _textColorAnimation,
+                                      builder: (context, child) {
+                                        return Text(
+                                          'y la tecnología ...',
+                                          style: TextStyle(
+                                            color: _textColorAnimation.value,
+                                            fontSize: isSmallScreen ? 20 : 24,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 1.5,
+                                            shadows: [
+                                              Shadow(
+                                                blurRadius: 10,
+                                                color: Colors.black.withOpacity(0.2),
+                                                offset: const Offset(2, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'la sostenibilidad',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w300,
-                                    letterSpacing: 1.2,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'y la tecnología ...',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w300,
-                                    letterSpacing: 1.2,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ],
           ),

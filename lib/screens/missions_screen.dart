@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'RankingScreen.dart'; // Ajusta esta ruta según tu estructura de archivos
 import 'bottom_navigation_widget.dart';
 
 class MissionsScreen extends StatefulWidget {
@@ -101,7 +102,7 @@ class _MissionsScreenState extends State<MissionsScreen> with TickerProviderStat
           title: 'Compra 1 gaseosa',
           description: 'Porcentaje de la meta alcanzado',
           progress: 1.0,
-          reward: '5 LUKAS',
+          reward: '5 XP',
           isCompleted: true,
           icon: Icons.local_drink,
           iconColor: Colors.green,
@@ -111,7 +112,7 @@ class _MissionsScreenState extends State<MissionsScreen> with TickerProviderStat
           title: 'Donar ropa usada',
           description: 'Meta completada exitosamente',
           progress: 1.0,
-          reward: '25 LUKAS',
+          reward: '25 XP',
           isCompleted: true,
           icon: Icons.checkroom,
           iconColor: Colors.blue,
@@ -121,7 +122,7 @@ class _MissionsScreenState extends State<MissionsScreen> with TickerProviderStat
           title: 'Reciclar 10 botellas',
           description: 'Misión ecológica completada',
           progress: 1.0,
-          reward: '15 LUKAS',
+          reward: '15 XP',
           isCompleted: true,
           icon: Icons.recycling,
           iconColor: Colors.green,
@@ -131,7 +132,7 @@ class _MissionsScreenState extends State<MissionsScreen> with TickerProviderStat
           title: 'Participar en campaña',
           description: 'Primera participación exitosa',
           progress: 1.0,
-          reward: '30 LUKAS',
+          reward: '30 XP',
           isCompleted: true,
           icon: Icons.campaign,
           iconColor: Colors.purple,
@@ -148,7 +149,7 @@ class _MissionsScreenState extends State<MissionsScreen> with TickerProviderStat
           title: 'Compra 2 gaseosa',
           description: 'Estado de la campaña',
           progress: 0.5,
-          reward: '10 LUKAS',
+          reward: '10 XP',
           isCompleted: false,
           icon: Icons.local_drink,
           iconColor: Colors.orange,
@@ -158,7 +159,7 @@ class _MissionsScreenState extends State<MissionsScreen> with TickerProviderStat
           title: 'Participar en 3 campañas',
           description: 'Progreso: 1/3 campañas',
           progress: 0.33,
-          reward: '50 LUKAS',
+          reward: '50 XP',
           isCompleted: false,
           icon: Icons.campaign,
           iconColor: Colors.purple,
@@ -168,7 +169,7 @@ class _MissionsScreenState extends State<MissionsScreen> with TickerProviderStat
           title: 'Comprar 5 productos',
           description: 'Progreso: 2/5 productos',
           progress: 0.4,
-          reward: '20 LUKAS',
+          reward: '20 XP',
           isCompleted: false,
           icon: Icons.shopping_bag,
           iconColor: Colors.blue,
@@ -178,7 +179,7 @@ class _MissionsScreenState extends State<MissionsScreen> with TickerProviderStat
           title: 'Usar 3 cupones',
           description: 'Progreso: 0/3 cupones',
           progress: 0.0,
-          reward: '30 LUKAS',
+          reward: '30 XP',
           isCompleted: false,
           icon: Icons.local_offer,
           iconColor: Colors.red,
@@ -186,9 +187,9 @@ class _MissionsScreenState extends State<MissionsScreen> with TickerProviderStat
         const SizedBox(height: 16),
         _buildMissionCard(
           title: 'Gastar 100 LUKAS',
-          description: 'Progreso: 45/100 LUKAS',
+          description: 'Progreso: 45/100 XP',
           progress: 0.45,
-          reward: '25 LUKAS',
+          reward: '25 XP',
           isCompleted: false,
           icon: Icons.monetization_on,
           iconColor: Colors.amber,
@@ -198,7 +199,7 @@ class _MissionsScreenState extends State<MissionsScreen> with TickerProviderStat
           title: 'Invitar 2 amigos',
           description: 'Progreso: 0/2 amigos',
           progress: 0.0,
-          reward: '40 LUKAS',
+          reward: '40 XP',
           isCompleted: false,
           icon: Icons.person_add,
           iconColor: Colors.pink,
@@ -320,7 +321,7 @@ class _MissionsScreenState extends State<MissionsScreen> with TickerProviderStat
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Image.asset(
-                        'assets/images/luka_moneda.png',
+                        'assets/images/xp.png',
                         width: 16,
                         height: 16,
                       ),
@@ -390,26 +391,28 @@ class _MissionsScreenState extends State<MissionsScreen> with TickerProviderStat
             children: [
               _buildAchievementBadge(
                 title: 'Consumidor\npromedio',
-                imagePath: 'assets/images/logro_oro.png',
+                imagePath: 'assets/images/ConsumidorPromedio.png',
                 isUnlocked: true,
+                
               ),
               _buildAchievementBadge(
                 title: 'Consumidor\nAbismal',
-                imagePath: 'assets/images/logro_rosa.png',
+                imagePath: 'assets/images/consumidorabismal.png',
                 isUnlocked: true,
               ),
               _buildAchievementBadge(
                 title: 'Eco\nWarrior',
-                imagePath: 'assets/images/logro_bronce.png',
-                isUnlocked: false,
+                imagePath: 'assets/images/geurrero ecologico.png',
+                isUnlocked: true,
               ),
               _buildAchievementBadge(
                 title: 'Master\nBuyer',
-                imagePath: 'assets/images/logro_plata.png',
-                isUnlocked: false,
+                imagePath: 'assets/images/Comprador maestro.png',
+                isUnlocked: true,
               ),
             ],
           ),
+        
         ],
       ),
     );

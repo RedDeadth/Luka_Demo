@@ -104,7 +104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             child: Center(
                               child: Image.asset(
-                                'assets/images/lapiz.png',
+                                'assets/images/lapiz.jpg',
                                 width: 16,
                                 height: 16,
                                 color: Colors.white,
@@ -355,7 +355,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               height: 24,
               color: _selectedIndex == 1 ? Colors.blue : (isDarkMode ? Colors.grey.shade400 : Colors.grey),
             ),
-            label: 'Campañas',
+            label: 'Ranking',
           ),
           BottomNavigationBarItem(
             icon: Container(

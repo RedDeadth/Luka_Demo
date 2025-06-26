@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'RankingScreen.dart';
 import 'campaigns_screen.dart';
 import 'accounts_screen.dart';
 import 'transactions_screen.dart';
@@ -38,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         CircleAvatar(
                           radius: 25,
                           backgroundColor: Colors.grey.shade300,
-                          child: const Icon(Icons.person, color: Colors.grey),
+                          backgroundImage: AssetImage('assets/images/person.jpg'),
                         ),
                         const SizedBox(width: 12),
                         const Column(
@@ -134,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           MaterialPageRoute(builder: (context) => const CampaignsScreen()),
                         );
                       },
-                      child: _buildCategoryIcon('Campañas', 'tipos.png'),
+                      child: _buildCategoryIcon('Campañas', 'campanas123.png'),
                     ),
                     GestureDetector(
                       onTap: () {
@@ -143,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           MaterialPageRoute(builder: (context) => const MissionsScreen()),
                         );
                       },
-                      child: _buildCategoryIcon('Misiones', 'tipos.png'),
+                      child: _buildCategoryIcon('Misiones', 'misiones.png'),
                     ),
                     GestureDetector(
                       onTap: () {
@@ -152,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           MaterialPageRoute(builder: (context) => const CouponsScreen()),
                         );
                       },
-                      child: _buildCategoryIcon('Cupones', 'tipos.png'),
+                      child: _buildCategoryIcon('Cupones', 'cupon.png'),
                     ),
                   ],
                 ),
@@ -341,7 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
               case 1:
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const CampaignsScreen()),
+                  MaterialPageRoute(builder: (context) => const RankingScreen()),
                 );
                 break;
               case 2:
@@ -390,7 +391,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 24,
                 color: _selectedIndex == 1 ? Colors.blue : Colors.grey,
               ),
-              label: 'Campañas',
+              label: 'Ranking',
             ),
             BottomNavigationBarItem(
               icon: Container(
