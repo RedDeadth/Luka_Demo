@@ -20,7 +20,43 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   int _notificationCount = 4; 
-  double _lukaPoints = 1.5;
+  double _lukaPoints = 15.0; // Cambiado a 1.5M en valor real
+  List<TransactionData> _transactions = []; // Lista de transacciones dinámicas
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeTransactions();
+  }
+
+  void _initializeTransactions() {
+    _transactions = [
+      TransactionData(
+        icon: 'egreso.png',
+        title: 'Compra uniformes',
+        time: 'Ayer - 08:30am',
+        amount: '-5',
+        color: Colors.red,
+        description: 'Campaña de Donación Solarinos',
+      ),
+      TransactionData(
+        icon: 'egreso.png',
+        title: 'Alquiler de oficina',
+        time: 'Ayer - 05:30pm',
+        amount: '-8',
+        color: Colors.red,
+        description: 'Pago mensual de oficina',
+      ),
+      TransactionData(
+        icon: 'ingreso.png',
+        title: 'Transferencia Recibida',
+        time: 'Hoy - 09:30am',
+        amount: '+18',
+        color: Colors.green,
+        description: 'Pago recibido de cliente',
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
               
               const SizedBox(height: 30),
               
-              // Saldo actual
+              // Saldo actual - AHORA ES DINÁMICO
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
@@ -179,9 +215,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     Row(
                       children: [
-                        const Text(
-                          '1,5M',
-                          style: TextStyle(
+                        Text(
+                          _formatLukaPoints(_lukaPoints), // Ahora usa la función de formateo
+                          style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
@@ -243,72 +279,28 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: _buildSectionHeader('Últimas Transacciones', 'Ver todo'),
               ),
               
-              // Lista de transacciones con navegación individual
-              GestureDetector(
+              // Lista de transacciones dinámicas
+              ..._transactions.map((transaction) => GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const TransferSuccessScreen(
-                        title: 'Compra uniformes',
-                        amount: '-5',
-                        description: 'Campaña de Donación Solarinos',
+                      builder: (context) => TransferSuccessScreen(
+                        title: transaction.title,
+                        amount: transaction.amount,
+                        description: transaction.description,
                       ),
                     ),
                   );
                 },
                 child: _buildTransactionItem(
-                  'egreso.png',
-                  'Compra uniformes',
-                  'Ayer - 08:30am',
-                  '-5',
-                  Colors.red,
+                  transaction.icon,
+                  transaction.title,
+                  transaction.time,
+                  transaction.amount,
+                  transaction.color,
                 ),
-              ),
-              
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const TransferSuccessScreen(
-                        title: 'Alquiler de oficina',
-                        amount: '-8',
-                        description: 'Pago mensual de oficina',
-                      ),
-                    ),
-                  );
-                },
-                child: _buildTransactionItem(
-                  'egreso.png',
-                  'Alquiler de oficina',
-                  'Ayer - 05:30pm',
-                  '-8',
-                  Colors.red,
-                ),
-              ),
-              
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const TransferSuccessScreen(
-                        title: 'Transferencia Recibida',
-                        amount: '+18',
-                        description: 'Pago recibido de cliente',
-                      ),
-                    ),
-                  );
-                },
-                child: _buildTransactionItem(
-                  'ingreso.png',
-                  'Transferencia Recibida',
-                  'Hoy - 09:30am',
-                  '+18',
-                  Colors.green,
-                ),
-              ),
+              )).toList(),
               
               const SizedBox(height: 100), // Espacio para el bottom navigation
             ],
@@ -357,7 +349,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Si se escaneó correctamente y se retornaron puntos
                 if (result != null && result > 0) {
                   _addLukaPoints(result.toDouble());
-                  _addQRTransaction(); // Agregar transacción a la lista
+                  _addQRTransaction(result); // Agregar transacción a la lista
                 }
                 break;
               case 3:
@@ -441,7 +433,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  // Nuevos métodos para manejar los puntos
+
+  // Métodos para manejar los puntos
   void _addLukaPoints(double points) {
     setState(() {
       _lukaPoints += points;
@@ -458,12 +451,33 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _addQRTransaction() {
-    // Aquí podrías agregar la transacción a una lista si lo manejas dinámicamente
-    // Por ahora solo actualizamos el contador de notificaciones
+  void _addQRTransaction(int pointsEarned) {
+    final now = DateTime.now();
+    final timeFormat = _formatTime(now);
+    
     setState(() {
+      // Agregar la nueva transacción al inicio de la lista
+      _transactions.insert(0, TransactionData(
+        icon: 'ingreso.png',
+        title: 'QR Escaneado',
+        time: timeFormat,
+        amount: '+$pointsEarned',
+        color: Colors.green,
+        description: 'Puntos obtenidos por escanear QR',
+      ));
+      
+      // Incrementar notificaciones
       _notificationCount++;
     });
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final hour = dateTime.hour;
+    final minute = dateTime.minute;
+    final amPm = hour >= 12 ? 'pm' : 'am';
+    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    
+    return 'Hoy - ${displayHour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}$amPm';
   }
 
   // Resto de métodos existentes...
@@ -552,6 +566,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }  
+  
   List<NotificationItemData> _getNotifications() {
     return [
       NotificationItemData(
@@ -908,6 +923,25 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
+
+// Clase para manejar datos de transacciones
+class TransactionData {
+  final String icon;
+  final String title;
+  final String time;
+  final String amount;
+  final Color color;
+  final String description;
+
+  TransactionData({
+    required this.icon,
+    required this.title,
+    required this.time,
+    required this.amount,
+    required this.color,
+    required this.description,
+  });
 }
 
 class NotificationItemData {
