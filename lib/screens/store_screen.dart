@@ -3,28 +3,45 @@ import 'shopping_cart_screen.dart';
 import 'bottom_navigation_widget.dart';
 
 class StoreScreen extends StatefulWidget {
-  const StoreScreen({Key? key}) : super(key: key);
+  final double? initialBalance; // Recibir saldo del HomeScreen
+  final Function(double)? onBalanceUpdated; // Callback para actualizar saldo
+
+  const StoreScreen({Key? key, this.initialBalance, this.onBalanceUpdated})
+    : super(key: key);
 
   @override
   State<StoreScreen> createState() => _StoreScreenState();
 }
 
-class _StoreScreenState extends State<StoreScreen> with TickerProviderStateMixin {
+class _StoreScreenState extends State<StoreScreen>
+    with TickerProviderStateMixin {
   late TabController _tabController;
   int _selectedIndex = 3;
   List<CartItem> _cartItems = [];
-  double _userBalance = 1500.0; // Saldo del usuario en LUKAS
+  late double _userBalance;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    // Usar el saldo del HomeScreen si está disponible, sino usar valor por defecto
+    _userBalance = widget.initialBalance ?? 1500.0;
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _updateBalance(double newBalance) {
+    setState(() {
+      _userBalance = newBalance;
+    });
+    // Propagar el cambio al HomeScreen
+    if (widget.onBalanceUpdated != null) {
+      widget.onBalanceUpdated!(newBalance);
+    }
   }
 
   @override
@@ -53,15 +70,17 @@ class _StoreScreenState extends State<StoreScreen> with TickerProviderStateMixin
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ShoppingCartScreen(
-                        cartItems: _cartItems,
-                        userBalance: _userBalance,
-                        onUpdateCart: (updatedItems) {
-                          setState(() {
-                            _cartItems = updatedItems;
-                          });
-                        },
-                      ),
+                      builder:
+                          (context) => ShoppingCartScreen(
+                            cartItems: _cartItems,
+                            userBalance: _userBalance,
+                            onUpdateCart: (updatedItems) {
+                              setState(() {
+                                _cartItems = updatedItems;
+                              });
+                            },
+                            onBalanceUpdated: _updateBalance, // Pasar callback
+                          ),
                     ),
                   );
                 },
@@ -129,7 +148,7 @@ class _StoreScreenState extends State<StoreScreen> with TickerProviderStateMixin
               ],
             ),
           ),
-          
+
           // Tab Bar
           Container(
             color: Colors.white,
@@ -153,7 +172,7 @@ class _StoreScreenState extends State<StoreScreen> with TickerProviderStateMixin
               ],
             ),
           ),
-          
+
           // Tab Bar View
           Expanded(
             child: TabBarView(
@@ -170,7 +189,7 @@ class _StoreScreenState extends State<StoreScreen> with TickerProviderStateMixin
           ),
         ],
       ),
-      
+
       // Bottom Navigation con índice 3 (Tienda)
       bottomNavigationBar: const CustomBottomNavigation(currentIndex: 3),
     );
@@ -227,7 +246,7 @@ class _StoreScreenState extends State<StoreScreen> with TickerProviderStateMixin
               ),
             ),
           ),
-          
+
           // Información del producto
           Expanded(
             flex: 2,
@@ -392,14 +411,16 @@ class _StoreScreenState extends State<StoreScreen> with TickerProviderStateMixin
 
   void _addToCart(Product product) {
     setState(() {
-      final existingIndex = _cartItems.indexWhere((item) => item.product.id == product.id);
+      final existingIndex = _cartItems.indexWhere(
+        (item) => item.product.id == product.id,
+      );
       if (existingIndex >= 0) {
         _cartItems[existingIndex].quantity++;
       } else {
         _cartItems.add(CartItem(product: product, quantity: 1));
       }
     });
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${product.name} agregado al carrito'),
@@ -430,10 +451,7 @@ class CartItem {
   final Product product;
   int quantity;
 
-  CartItem({
-    required this.product,
-    required this.quantity,
-  });
+  CartItem({required this.product, required this.quantity});
 
   double get totalPrice => product.price * quantity;
 }

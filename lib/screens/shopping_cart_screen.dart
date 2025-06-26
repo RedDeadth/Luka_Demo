@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'store_screen.dart';
+import 'purchase_sucesss_creen.dart';
 
 class ShoppingCartScreen extends StatefulWidget {
   final List<CartItem> cartItems;
   final double userBalance;
   final Function(List<CartItem>) onUpdateCart;
+  final Function(double)? onBalanceUpdated; // Callback para actualizar saldo
 
   const ShoppingCartScreen({
     Key? key,
     required this.cartItems,
     required this.userBalance,
     required this.onUpdateCart,
+    this.onBalanceUpdated,
   }) : super(key: key);
 
   @override
@@ -87,10 +90,7 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
           const SizedBox(height: 8),
           Text(
             'Agrega productos para comenzar',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade500,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
@@ -142,9 +142,9 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
             ],
           ),
         ),
-        
+
         const SizedBox(height: 8),
-        
+
         // Lista de productos en el carrito
         Expanded(
           child: ListView.builder(
@@ -190,9 +190,9 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
               ),
             ),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Información del producto
           Expanded(
             child: Column(
@@ -225,17 +225,14 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
                     ),
                     const Text(
                       ' c/u',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          
+
           // Controles de cantidad
           Column(
             children: [
@@ -257,7 +254,7 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
                       ),
                     ),
                   ),
-                  
+
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
@@ -268,7 +265,7 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
                       ),
                     ),
                   ),
-                  
+
                   GestureDetector(
                     onTap: () => _increaseQuantity(index),
                     child: Container(
@@ -287,9 +284,9 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               // Total por producto
               Row(
                 children: [
@@ -311,9 +308,9 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
               ),
             ],
           ),
-          
+
           const SizedBox(width: 8),
-          
+
           // Botón eliminar
           GestureDetector(
             onTap: () => _removeItem(index),
@@ -386,7 +383,7 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
                 ),
               ],
             ),
-            
+
             if (!_canAfford) ...[
               const SizedBox(height: 8),
               Text(
@@ -398,9 +395,9 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
                 ),
               ),
             ],
-            
+
             const SizedBox(height: 16),
-            
+
             // Botón de comprar
             SizedBox(
               width: double.infinity,
@@ -449,36 +446,50 @@ class _ShoppingCartScreenState extends State<ShoppingCartScreen> {
     });
   }
 
-  void _processPayment() {
+  void _processPayment() async {
     if (_canAfford && _cartItems.isNotEmpty) {
-      // Simular el procesamiento del pago
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('¡Compra Exitosa!'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Total pagado: ${_totalAmount.toStringAsFixed(0)} LUKAS'),
-              Text('Nuevo saldo: ${(_userBalance - _totalAmount).toStringAsFixed(0)} LUKAS'),
-              const SizedBox(height: 8),
-              const Text('Tu pedido será procesado pronto.'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Cerrar dialog
-                Navigator.pop(context); // Volver a tienda
-                // Actualizar saldo y limpiar carrito
-                widget.onUpdateCart([]);
-              },
-              child: const Text('OK'),
-            ),
-          ],
+      // Crear copia de los items comprados antes de limpiar el carrito
+      final purchasedItems = List<CartItem>.from(_cartItems);
+      final newBalance = _userBalance - _totalAmount;
+      final transactionId = _generateTransactionId();
+
+      // Actualizar saldo local
+      setState(() {
+        _userBalance = newBalance;
+        _cartItems.clear();
+      });
+
+      // Actualizar carrito en el padre
+      widget.onUpdateCart([]);
+
+      // Llamar callback para actualizar saldo en HomeScreen si existe
+      if (widget.onBalanceUpdated != null) {
+        widget.onBalanceUpdated!(newBalance);
+      }
+
+      // Navegar al voucher de compra
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => PurchaseSuccessVoucherScreen(
+                purchasedItems: purchasedItems,
+                totalAmount: _totalAmount,
+                newBalance: newBalance,
+                transactionId: transactionId,
+              ),
         ),
       );
+
+      // Después de que el usuario vuelve del voucher, cerrar el carrito
+      if (mounted) {
+        Navigator.pop(context);
+      }
     }
+  }
+
+  String _generateTransactionId() {
+    final now = DateTime.now();
+    return 'PUR${now.millisecondsSinceEpoch.toString().substring(8)}';
   }
 }

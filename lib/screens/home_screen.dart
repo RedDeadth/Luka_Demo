@@ -415,9 +415,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
                 break;
               case 3:
-                Navigator.push(
+                final result = await Navigator.push<Map<String, dynamic>>(
                   context,
-                  MaterialPageRoute(builder: (context) => const StoreScreen()),
+                  MaterialPageRoute(
+                    builder:
+                        (context) => StoreScreen(
+                          initialBalance: _lukaPoints,
+                          onBalanceUpdated: (newBalance) {
+                            _updateLukaPoints(newBalance);
+                            // Agregar transacción de compra
+                            final amountSpent = _lukaPoints - newBalance;
+                            if (amountSpent > 0) {
+                              _addPurchaseTransaction(
+                                amountSpent,
+                                'Productos de la tienda',
+                              );
+                            }
+                          },
+                        ),
+                  ),
                 );
                 break;
               case 4:
@@ -545,6 +561,36 @@ class _HomeScreenState extends State<HomeScreen> {
     final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
 
     return 'Hoy - ${displayHour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}$amPm';
+  }
+
+  void _updateLukaPoints(double newBalance) {
+    setState(() {
+      _lukaPoints = newBalance;
+    });
+  }
+
+  // 2. Agregar método para agregar transacción de compra
+  void _addPurchaseTransaction(double amount, String description) {
+    final now = DateTime.now();
+    final timeFormat = _formatTime(now);
+
+    setState(() {
+      // Agregar la nueva transacción al inicio de la lista
+      _transactions.insert(
+        0,
+        TransactionData(
+          icon: 'egreso.png',
+          title: 'Compra en Tienda',
+          time: timeFormat,
+          amount: '-${amount.toStringAsFixed(0)}',
+          color: Colors.red,
+          description: description,
+        ),
+      );
+
+      // Incrementar notificaciones
+      _notificationCount++;
+    });
   }
 
   // Resto de métodos existentes...
