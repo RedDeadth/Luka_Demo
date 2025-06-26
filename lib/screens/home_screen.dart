@@ -9,6 +9,7 @@ import 'store_screen.dart';
 import 'missions_screen.dart';
 import 'profile_screen.dart';
 import 'qrscanscreen.dart';
+import 'GenerateQrScreen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -174,6 +175,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       },
                       child: _buildCategoryIcon('Campañas', 'campanas123.png'),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const GenerateQrCodeScreen()),
+                        );
+                      },
+                      child: _buildCategoryIcon('Emitir Lukitas', 'emitir_lukitas.png'), // Puedes usar un ícono custom
                     ),
                     GestureDetector(
                       onTap: () {

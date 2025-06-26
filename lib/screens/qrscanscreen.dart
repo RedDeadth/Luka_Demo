@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'qr_success_voucher_screen.dart'; // Importar la nueva pantalla
 
 class QRScannerScreen extends StatefulWidget {
   const QRScannerScreen({Key? key}) : super(key: key);
@@ -12,53 +11,91 @@ class QRScannerScreen extends StatefulWidget {
 }
 
 class _QRScannerScreenState extends State<QRScannerScreen> {
-  MobileScannerController controller = MobileScannerController();
-  String? result;
-  bool hasPermission = false;
-  bool isProcessing = false;
+  MobileScannerController cameraController = MobileScannerController();
+  bool _isScanning = false;
+  bool _isFlashOn = false; // Track flash state manually
+  bool _isFrontCamera = false; // Track camera facing manually
 
   @override
   void initState() {
     super.initState();
-    _requestCameraPermission();
+    _checkPermissions();
   }
 
-  Future<void> _requestCameraPermission() async {
+  Future<void> _checkPermissions() async {
     final status = await Permission.camera.request();
-    setState(() {
-      hasPermission = status.isGranted;
-    });
+
+    if (status.isGranted) {
+      if (mounted) {
+        setState(() {
+          _isScanning = true;
+        });
+      }
+    } else if (status.isDenied) {
+      print("Camera permission denied");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Permiso de cámara denegado. Habilítalo en la configuración de la aplicación.'),
+            duration: Duration(seconds: 5),
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    } else if (status.isPermanentlyDenied) {
+      print("Camera permission permanently denied. Opening app settings.");
+      openAppSettings();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Permiso de cámara denegado permanentemente. Abre la configuración para habilitarlo.'),
+            duration: Duration(seconds: 5),
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    }
+  }
+
+  Future<void> _toggleFlash() async {
+    try {
+      await cameraController.toggleTorch();
+      setState(() {
+        _isFlashOn = !_isFlashOn;
+      });
+    } catch (e) {
+      print('Error toggling flash: $e');
+    }
+  }
+
+  Future<void> _switchCamera() async {
+    try {
+      await cameraController.switchCamera();
+      setState(() {
+        _isFrontCamera = !_isFrontCamera;
+      });
+    } catch (e) {
+      print('Error switching camera: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    cameraController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!hasPermission) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Escanear QR'),
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
-        ),
+    if (!_isScanning) {
+      return const Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.camera_alt, size: 64, color: Colors.grey),
-              const SizedBox(height: 16),
-              const Text(
-                'Se necesita permiso de cámara\npara escanear códigos QR',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _requestCameraPermission,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Dar Permisos'),
-              ),
+              CircularProgressIndicator(),
+              SizedBox(height: 20),
+              Text('Verificando permisos de cámara...'),
             ],
           ),
         ),
@@ -69,141 +106,42 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       appBar: AppBar(
         title: const Text('Escanear QR'),
         backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
         actions: [
+          // Flashlight button
           IconButton(
-            icon: const Icon(Icons.flash_on),
-            onPressed: () async {
-              await controller.toggleTorch();
-            },
+            color: Colors.white,
+            icon: Icon(
+              _isFlashOn ? Icons.flash_on : Icons.flash_off,
+              color: _isFlashOn ? Colors.yellow : Colors.grey,
+            ),
+            onPressed: _toggleFlash,
           ),
+          // Camera facing button
           IconButton(
-            icon: const Icon(Icons.flip_camera_ios),
-            onPressed: () async {
-              await controller.switchCamera();
-            },
+            color: Colors.white,
+            icon: Icon(
+              _isFrontCamera ? Icons.camera_front : Icons.camera_rear,
+              color: Colors.white,
+            ),
+            onPressed: _switchCamera,
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          MobileScanner(
-            controller: controller,
-            onDetect: _onDetect,
-          ),
-          
-          // Marco de escaneo
-          Center(
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Colors.blue,
-                  width: 3,
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          
-          // Instrucciones
-          Positioned(
-            top: 50,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                'Apunta la cámara hacia un código QR\npara obtener 10 Luka Points',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ),
-
-          // Indicador de procesamiento
-          if (isProcessing)
-            Container(
-              color: Colors.black.withOpacity(0.7),
-              child: const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(color: Colors.blue),
-                    SizedBox(height: 16),
-                    Text(
-                      'Procesando QR...',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
+      body: MobileScanner(
+        controller: cameraController,
+        onDetect: (capture) {
+          final List<Barcode> barcodes = capture.barcodes;
+          if (barcodes.isNotEmpty) {
+            final String? scannedValue = barcodes.first.rawValue;
+            if (scannedValue != null) {
+              // Stop scanning immediately after a successful scan
+              cameraController.stop();
+              // Return the scanned string value to the previous screen
+              Navigator.of(context).pop(scannedValue);
+            }
+          }
+        },
       ),
     );
-  }
-
-  void _onDetect(BarcodeCapture capture) {
-    final List<Barcode> barcodes = capture.barcodes;
-    if (!isProcessing && barcodes.isNotEmpty && barcodes.first.rawValue != null) {
-      _processQRCode(barcodes.first.rawValue!);
-    }
-  }
-
-  Future<void> _processQRCode(String qrData) async {
-    if (isProcessing) return;
-    
-    setState(() {
-      isProcessing = true;
-    });
-
-    // Pausar la cámara mientras procesamos
-    await controller.stop();
-
-    // Simular procesamiento (aquí irías a tu API)
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Mostrar voucher exitoso
-    if (mounted) {
-      final result = await Navigator.push<int>(
-        context,
-        MaterialPageRoute(
-          builder: (context) => QRSuccessVoucherScreen(
-            lukaPointsEarned: 10,
-            transactionId: _generateTransactionId(),
-            qrData: qrData,
-          ),
-        ),
-      );
-      
-      // Si el usuario volvió del voucher, regresar al home con los puntos
-      if (result != null) {
-        Navigator.pop(context, result);
-      } else {
-        // Si solo cerró el voucher, volver al home con 10 puntos
-        Navigator.pop(context, 10);
-      }
-    }
-  }
-
-  String _generateTransactionId() {
-    final now = DateTime.now();
-    return 'TXN${now.millisecondsSinceEpoch.toString().substring(7)}';
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
   }
 }
