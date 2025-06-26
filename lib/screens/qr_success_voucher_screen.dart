@@ -210,8 +210,8 @@ class QRSuccessVoucherScreen extends StatelessWidget {
                               // Botón Home
                               GestureDetector(
                                 onTap: () {
-                                  // Volver al home con los puntos
-                                  Navigator.of(context).popUntil((route) => route.isFirst);
+                                  // Volver al home de forma segura - método alternativo
+                                  Navigator.pop(context, lukaPointsEarned);
                                 },
                                 child: Column(
                                   children: [
@@ -243,7 +243,13 @@ class QRSuccessVoucherScreen extends StatelessWidget {
                               // Botón Compartir
                               GestureDetector(
                                 onTap: () {
-                                  _shareVoucher();
+                                  // Mostrar mensaje simple en lugar de funcionalidad compleja
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Compartir funcionalidad próximamente'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
                                 },
                                 child: Column(
                                   children: [
@@ -275,8 +281,8 @@ class QRSuccessVoucherScreen extends StatelessWidget {
                               // Botón Agregar (+)
                               GestureDetector(
                                 onTap: () {
-                                  // Escanear otro QR
-                                  Navigator.pop(context);
+                                  // Volver al home en lugar de al scanner
+                                  Navigator.of(context).popUntil((route) => route.isFirst);
                                 },
                                 child: Column(
                                   children: [
@@ -295,7 +301,7 @@ class QRSuccessVoucherScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 8),
                                     const Text(
-                                      'Escanear\nOtro',
+                                      'Continuar',
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         color: Colors.grey,
@@ -376,11 +382,6 @@ class QRSuccessVoucherScreen extends StatelessWidget {
     ];
     
     return '${months[now.month - 1]} ${now.day}, ${now.year}';
-  }
-
-  void _shareVoucher() {
-    // Implementar compartir voucher
-    // Podrías usar share_plus package
   }
 
   void _showInfoDialog(BuildContext context) {

@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.luka"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -42,3 +42,5 @@ android {
 flutter {
     source = "../.."
 }
+
+
