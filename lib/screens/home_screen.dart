@@ -20,7 +20,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  int _notificationCount = 4; 
+  int _notificationCount = 4;
   double _lukaPoints = 15.0; // Cambiado a 1.5M en valor real
   List<TransactionData> _transactions = []; // Lista de transacciones dinámicas
 
@@ -78,7 +78,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         CircleAvatar(
                           radius: 25,
                           backgroundColor: Colors.grey.shade300,
-                          backgroundImage: AssetImage('assets/images/person.jpg'),
+                          backgroundImage: AssetImage(
+                            'assets/images/person.jpg',
+                          ),
                         ),
                         const SizedBox(width: 12),
                         const Column(
@@ -103,9 +105,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                    
+
                     const Spacer(),
-                    
+
                     // Botón de notificaciones con badge
                     GestureDetector(
                       onTap: () {
@@ -136,7 +138,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   decoration: BoxDecoration(
                                     color: Colors.red,
                                     borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: Colors.white, width: 1),
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 1,
+                                    ),
                                   ),
                                   constraints: const BoxConstraints(
                                     minWidth: 18,
@@ -160,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              
+
               // Iconos de categorías con navegación
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -171,7 +176,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const CampaignsScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => const CampaignsScreen(),
+                          ),
                         );
                       },
                       child: _buildCategoryIcon('Campañas', 'campanas123.png'),
@@ -181,16 +188,22 @@ class _HomeScreenState extends State<HomeScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const GenerateQrCodeScreen()),
+                            builder: (context) => const GenerateQrCodeScreen(),
+                          ),
                         );
                       },
-                      child: _buildCategoryIcon('Emitir Lukitas', 'emitir_lukitas.png'), // Puedes usar un ícono custom
+                      child: _buildCategoryIcon(
+                        'Emitir Lukitas',
+                        'emitir_lukitas.png',
+                      ), // Puedes usar un ícono custom
                     ),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const MissionsScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => const MissionsScreen(),
+                          ),
                         );
                       },
                       child: _buildCategoryIcon('Misiones', 'misiones.png'),
@@ -199,7 +212,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const CouponsScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => const CouponsScreen(),
+                          ),
                         );
                       },
                       child: _buildCategoryIcon('Cupones', 'cupon.png'),
@@ -207,9 +222,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 30),
-              
+
               // Saldo actual - AHORA ES DINÁMICO
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -227,7 +242,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       children: [
                         Text(
-                          _formatLukaPoints(_lukaPoints), // Ahora usa la función de formateo
+                          _formatLukaPoints(
+                            _lukaPoints,
+                          ), // Ahora usa la función de formateo
                           style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
@@ -245,20 +262,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 30),
-              
+
               // Mis Cuentas con navegación
               GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const AccountsScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const AccountsScreen(),
+                    ),
                   );
                 },
                 child: _buildSectionHeader('Mis Cuentas', 'Ver todo'),
               ),
-              
+
               // Tarjeta Tecsup
               _buildAccountCard(
                 'tecsup.png',
@@ -267,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 '10',
                 Colors.blue,
               ),
-              
+
               // Tarjeta Cerro Verde
               _buildAccountCard(
                 'cerro_verde.png',
@@ -276,49 +295,56 @@ class _HomeScreenState extends State<HomeScreen> {
                 '3',
                 Colors.green,
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Últimas Transacciones con navegación
               GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const TransactionsScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const TransactionsScreen(),
+                    ),
                   );
                 },
                 child: _buildSectionHeader('Últimas Transacciones', 'Ver todo'),
               ),
-              
+
               // Lista de transacciones dinámicas
-              ..._transactions.map((transaction) => GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TransferSuccessScreen(
-                        title: transaction.title,
-                        amount: transaction.amount,
-                        description: transaction.description,
+              ..._transactions
+                  .map(
+                    (transaction) => GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => TransferSuccessScreen(
+                                  title: transaction.title,
+                                  amount: transaction.amount,
+                                  description: transaction.description,
+                                ),
+                          ),
+                        );
+                      },
+                      child: _buildTransactionItem(
+                        transaction.icon,
+                        transaction.title,
+                        transaction.time,
+                        transaction.amount,
+                        transaction.color,
                       ),
                     ),
-                  );
-                },
-                child: _buildTransactionItem(
-                  transaction.icon,
-                  transaction.title,
-                  transaction.time,
-                  transaction.amount,
-                  transaction.color,
-                ),
-              )).toList(),
-              
+                  )
+                  .toList(),
+
               const SizedBox(height: 100), // Espacio para el bottom navigation
             ],
           ),
         ),
       ),
-      
+
       // Bottom Navigation Bar
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -338,7 +364,7 @@ class _HomeScreenState extends State<HomeScreen> {
             setState(() {
               _selectedIndex = index;
             });
-            
+
             // Navegación del bottom navigation
             switch (index) {
               case 0:
@@ -347,20 +373,45 @@ class _HomeScreenState extends State<HomeScreen> {
               case 1:
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const RankingScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const RankingScreen(),
+                  ),
                 );
                 break;
+              // En tu HomeScreen, actualiza la parte del BottomNavigationBar case 2:
+
               case 2:
-                // QR Scanner - Implementación completa
+                // QR Scanner - Implementación completa y corregida
                 final result = await Navigator.push<int>(
                   context,
-                  MaterialPageRoute(builder: (context) => const QRScannerScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const QRScannerScreen(),
+                  ),
                 );
-                
+
                 // Si se escaneó correctamente y se retornaron puntos
                 if (result != null && result > 0) {
                   _addLukaPoints(result.toDouble());
                   _addQRTransaction(result); // Agregar transacción a la lista
+
+                  // Mostrar mensaje de éxito
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          Image.asset(
+                            'assets/images/luka_moneda.png',
+                            width: 24,
+                            height: 24,
+                          ),
+                          const SizedBox(width: 8),
+                          Text('¡Ganaste $result Luka Points!'),
+                        ],
+                      ),
+                      backgroundColor: Colors.green,
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
                 }
                 break;
               case 3:
@@ -372,7 +423,9 @@ class _HomeScreenState extends State<HomeScreen> {
               case 4:
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileScreen(),
+                  ),
                 );
                 break;
             }
@@ -465,18 +518,21 @@ class _HomeScreenState extends State<HomeScreen> {
   void _addQRTransaction(int pointsEarned) {
     final now = DateTime.now();
     final timeFormat = _formatTime(now);
-    
+
     setState(() {
       // Agregar la nueva transacción al inicio de la lista
-      _transactions.insert(0, TransactionData(
-        icon: 'ingreso.png',
-        title: 'QR Escaneado',
-        time: timeFormat,
-        amount: '+$pointsEarned',
-        color: Colors.green,
-        description: 'Puntos obtenidos por escanear QR',
-      ));
-      
+      _transactions.insert(
+        0,
+        TransactionData(
+          icon: 'ingreso.png',
+          title: 'QR Escaneado',
+          time: timeFormat,
+          amount: '+$pointsEarned',
+          color: Colors.green,
+          description: 'Puntos obtenidos por escanear QR',
+        ),
+      );
+
       // Incrementar notificaciones
       _notificationCount++;
     });
@@ -487,7 +543,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final minute = dateTime.minute;
     final amPm = hour >= 12 ? 'pm' : 'am';
     final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-    
+
     return 'Hoy - ${displayHour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}$amPm';
   }
 
@@ -497,134 +553,152 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        builder: (context, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-          ),
-          child: Column(
-            children: [
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Row(
-                  children: [
-                    const Text(
-                      'Notifications',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+      builder:
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.85,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            builder:
+                (context, scrollController) => Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.symmetric(vertical: 12),
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ),
-              if (_notificationCount > 0)
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange.shade200),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                        child: Row(
+                          children: [
+                            const Text(
+                              'Notifications',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const Spacer(),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_notificationCount > 0)
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.orange.shade200),
+                          ),
+                          child: Text(
+                            '$_notificationCount new notifications',
+                            style: TextStyle(
+                              color: Colors.orange.shade700,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      Expanded(
+                        child: ListView.builder(
+                          controller: scrollController,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: _getNotifications().length,
+                          itemBuilder: (context, index) {
+                            final notification = _getNotifications()[index];
+                            return _buildNotificationCardModal(notification);
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    '$_notificationCount new notifications',
-                    style: TextStyle(
-                      color: Colors.orange.shade700,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
                 ),
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: _getNotifications().length,
-                  itemBuilder: (context, index) {
-                    final notification = _getNotifications()[index];
-                    return _buildNotificationCardModal(notification);
-                  },
-                ),
-              ),
-            ],
           ),
-        ),
-      ),
     );
-  }  
-  
+  }
+
   List<NotificationItemData> _getNotifications() {
     return [
       NotificationItemData(
         title: 'Compra cafetería',
-        description: 'You just made a transfer of 45.00 to Trevor Philips on November 18, 2024 at 09:31 AM. If you did not do this, please call 11223344 immediately.',
+        description:
+            'You just made a transfer of 45.00 to Trevor Philips on November 18, 2024 at 09:31 AM. If you did not do this, please call 11223344 immediately.',
         time: 'Today • 09:31 AM',
         type: NotificationType.purchase,
         isNew: true,
       ),
       NotificationItemData(
         title: 'Compra menu',
-        description: 'You just made a purchase \$15.00 of Figma Professional on November 18, 2024 at 08:52 AM. If you did not do this, please call 11223344 immediately.',
+        description:
+            'You just made a purchase \$15.00 of Figma Professional on November 18, 2024 at 08:52 AM. If you did not do this, please call 11223344 immediately.',
         time: 'Today • 08:52 AM',
         type: NotificationType.purchase,
         isNew: true,
       ),
       NotificationItemData(
         title: 'Compra cafetería',
-        description: 'You just made a purchase \$9.99 of Youtube Premium on November 18, 2024 at 08:15 AM. If you did not do this, please call 11223344 immediately.',
+        description:
+            'You just made a purchase \$9.99 of Youtube Premium on November 18, 2024 at 08:15 AM. If you did not do this, please call 11223344 immediately.',
         time: 'Today • 08:15 AM',
         type: NotificationType.purchase,
         isNew: true,
       ),
       NotificationItemData(
         title: 'Gracias por tu apoyo :)',
-        description: 'Add 10 lukitas to your Bank account from IT Company MediaTech on November 18, 2024 at 00:00 AM.',
+        description:
+            'Add 10 lukitas to your Bank account from IT Company MediaTech on November 18, 2024 at 00:00 AM.',
         time: 'Today • 08:00 AM',
         type: NotificationType.reward,
         isNew: true,
       ),
       NotificationItemData(
         title: 'Transfer Out',
-        description: 'You just made a transfer of \$100.00 to Roger on November 17, 2024 at 09:12 AM. If you did not do this, please call 11223344 immediately.',
+        description:
+            'You just made a transfer of \$100.00 to Roger on November 17, 2024 at 09:12 AM. If you did not do this, please call 11223344 immediately.',
         time: 'Today • 09:12 AM',
         type: NotificationType.transfer,
         isNew: false,
       ),
       NotificationItemData(
         title: 'Freepick Subscription',
-        description: 'You just made a purchase \$59.00 of Freepick Premium on November 17, 2024 at 08:52 AM. If you did not do this, please call 11223344 immediately.',
+        description:
+            'You just made a purchase \$59.00 of Freepick Premium on November 17, 2024 at 08:52 AM. If you did not do this, please call 11223344 immediately.',
         time: 'Today • 08:52 AM',
         type: NotificationType.subscription,
         isNew: false,
       ),
       NotificationItemData(
         title: 'Sportify Premium',
-        description: 'You just made a purchase \$9.99 of Sportify Premium on November 17, 2024 at 08:15 AM. If you did not do this, please call 11223344 immediately.',
+        description:
+            'You just made a purchase \$9.99 of Sportify Premium on November 17, 2024 at 08:15 AM. If you did not do this, please call 11223344 immediately.',
         time: 'Today • 08:15 AM',
         type: NotificationType.subscription,
         isNew: false,
@@ -640,7 +714,10 @@ class _HomeScreenState extends State<HomeScreen> {
         color: notification.isNew ? Colors.purple.shade50 : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: notification.isNew ? Colors.purple.shade100 : Colors.grey.shade200,
+          color:
+              notification.isNew
+                  ? Colors.purple.shade100
+                  : Colors.grey.shade200,
         ),
       ),
       child: Row(
@@ -684,19 +761,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 8),
                 Text(
                   notification.time,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade500,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                 ),
               ],
             ),
           ),
-          Icon(
-            Icons.chevron_right,
-            color: Colors.grey.shade400,
-            size: 20,
-          ),
+          Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
         ],
       ),
     );
@@ -759,13 +829,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
-          ),
-        ),
+        Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
       ],
     );
   }
@@ -786,17 +850,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Text(
             action,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.blue,
-            ),
+            style: const TextStyle(fontSize: 14, color: Colors.blue),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAccountCard(String iconName, String title, String subtitle, String value, Color color) {
+  Widget _buildAccountCard(
+    String iconName,
+    String title,
+    String subtitle,
+    String value,
+    Color color,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       padding: const EdgeInsets.all(16),
@@ -845,10 +912,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (subtitle.isNotEmpty)
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
               ],
             ),
@@ -866,7 +930,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTransactionItem(String iconName, String title, String time, String amount, Color color) {
+  Widget _buildTransactionItem(
+    String iconName,
+    String title,
+    String time,
+    String amount,
+    Color color,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       padding: const EdgeInsets.all(16),
@@ -914,10 +984,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 Text(
                   time,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
@@ -971,9 +1038,4 @@ class NotificationItemData {
   });
 }
 
-enum NotificationType {
-  purchase,
-  transfer,
-  subscription,
-  reward,
-}
+enum NotificationType { purchase, transfer, subscription, reward }
