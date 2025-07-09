@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../widgets/background_widget.dart';
 import '../services/supabase_service.dart';
-import 'email_verification_screen.dart';
+import '../services/user_manager.dart';
+import 'sign_in_screen.dart';
+import 'home_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({Key? key}) : super(key: key);
@@ -260,18 +262,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
         await _createInitialAccount();
         
         if (mounted) {
+          // Mostrar mensaje de éxito
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('¡Cuenta creada exitosamente! Recibirás 10 LUKAS de bienvenida.'),
               backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
             ),
           );
           
-          // Navegar a verificación de email
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const EmailVerificationScreen()),
-          );
+          // Esperar un poco para que se vea el mensaje
+          await Future.delayed(const Duration(seconds: 2));
+          
+          // OPCIÓN 1: Hacer login automático y ir al home
+          await _loginAutomatically();
+          
+          // OPCIÓN 2: Comentar la línea de arriba y descomentar la de abajo para ir al login
+          // _redirectToLogin();
         }
       } else {
         _showMessage('Error al crear la cuenta. Verifica que el email no esté registrado.');
@@ -304,6 +311,44 @@ class _SignUpScreenState extends State<SignUpScreen> {
       }
     } catch (e) {
       print('Error creando cuenta inicial: $e');
+    }
+  }
+
+  // OPCIÓN 1: Login automático después del registro
+  Future<void> _loginAutomatically() async {
+    try {
+      final loginSuccess = await UserManager.loginWithEmail(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+
+      if (loginSuccess && mounted) {
+        // Crear misiones por defecto para el nuevo usuario
+        await SupabaseService.createDefaultMissions();
+        
+        // Ir directamente al home
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+      } else {
+        _redirectToLogin();
+      }
+    } catch (e) {
+      print('Error en login automático: $e');
+      _redirectToLogin();
+    }
+  }
+
+  // OPCIÓN 2: Redirigir al login
+  void _redirectToLogin() {
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const SignInScreen()),
+        (route) => false,
+      );
     }
   }
 
