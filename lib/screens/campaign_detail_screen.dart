@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/supabase_service.dart';
+import '../services/user_manager.dart';
 
 class CampaignDetailScreen extends StatefulWidget {
   final String title;
@@ -26,13 +28,12 @@ class CampaignDetailScreen extends StatefulWidget {
 
 class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
   bool _isInterested = false;
-  double _donationAmount = 0;
-  final TextEditingController _donationController = TextEditingController();
+  int _currentParticipants = 0;
 
   @override
-  void dispose() {
-    _donationController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _currentParticipants = int.tryParse(widget.participants) ?? 127;
   }
 
   @override
@@ -81,7 +82,7 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
                               ),
                               const SizedBox(height: 8),
                               const Text(
-                                'INDECI',
+                                'LUKA - Sostenibilidad',
                                 style: TextStyle(
                                   color: Colors.blue,
                                   fontSize: 14,
@@ -97,7 +98,7 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
                                 ),
                               ),
                               Text(
-                                '${widget.participants} personas',
+                                '$_currentParticipants personas',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
@@ -280,67 +281,39 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
             
             const SizedBox(height: 20),
             
-            // Botones de acción
+            // Botón de interés - FUNCIONAL
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _isInterested = !_isInterested;
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(_isInterested 
-                              ? 'Agregado a tus campañas de interés' 
-                              : 'Removido de tus campañas de interés'),
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _isInterested ? Colors.red : Colors.teal,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _toggleInterest,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isInterested ? Colors.red : Colors.teal,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _isInterested ? 'Ya me interesa' : 'Me interesa',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _isInterested ? 'Me interesa' : 'Me interesa',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Icon(
-                            _isInterested ? Icons.favorite : Icons.favorite_border,
-                            color: _isInterested ? Colors.white : Colors.white,
-                          ),
-                        ],
+                      const SizedBox(width: 8),
+                      Icon(
+                        _isInterested ? Icons.favorite : Icons.favorite_border,
+                        color: Colors.white,
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () => _showDonationDialog(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Icon(Icons.volunteer_activism),
-                  ),
-                ],
+                ),
               ),
             ),
             
@@ -382,7 +355,7 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Detalles importantes: Solo se aceptarán donaciones en buen estado. Los materiales deben estar limpios y en condiciones adecuadas para su uso.',
+                    'Únete a esta importante iniciativa y contribuye al cambio positivo en nuestra comunidad.',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.black87,
@@ -409,7 +382,7 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(
-                      'Imágenes',
+                      'Galería',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 14,
@@ -441,7 +414,7 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
             
             const SizedBox(height: 24),
             
-            // Información del evento
+            // Información del evento - CON UBICACIÓN
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20),
               padding: const EdgeInsets.all(16),
@@ -471,11 +444,32 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
                   const SizedBox(height: 16),
                   
                   _buildInfoRow('Fecha:', '25/05 - 15/07'),
-                  _buildInfoRow('Ubicación:', 'Lima, Perú'),
-                  _buildInfoRow('Organizador:', 'INDECI'),
+                  _buildInfoRow('Ubicación:', 'Av. Cascanueces 2221, Villa El Salvador'),
+                  _buildInfoRow('Distrito:', 'Villa El Salvador, Lima'),
+                  _buildInfoRow('Organizador:', 'LUKA - Sostenibilidad'),
                   _buildInfoRow('Contacto:', '+51 999 888 777'),
-                  _buildInfoRow('Participantes:', '${widget.participants} personas'),
+                  _buildInfoRow('Participantes:', '$_currentParticipants personas'),
                   _buildInfoRow('Estado:', progress >= 1.0 ? 'Meta alcanzada' : 'En progreso'),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Botón de ubicación
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showLocationDialog(),
+                      icon: const Icon(Icons.location_on),
+                      label: const Text('Ver ubicación'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -567,24 +561,80 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
     );
   }
 
-  void _showDonationDialog() {
+  void _toggleInterest() {
+    setState(() {
+      if (!_isInterested) {
+        _isInterested = true;
+        _currentParticipants++;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Te has unido a la campaña!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        _isInterested = false;
+        _currentParticipants--;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Has salido de la campaña'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    });
+  }
+
+  void _showLocationDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Hacer Donación'),
+          title: const Row(
+            children: [
+              Icon(Icons.location_on, color: Colors.blue),
+              SizedBox(width: 8),
+              Text('Ubicación del evento'),
+            ],
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Contribuye a: ${widget.title}'),
+              const Text(
+                'Dirección:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const Text('Av. Cascanueces 2221, Villa El Salvador'),
+              const SizedBox(height: 12),
+              const Text(
+                'Distrito:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const Text('Villa El Salvador, Lima'),
+              const SizedBox(height: 12),
+              const Text(
+                'Referencia:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const Text('Cerca al Parque Zonal Huayna Cápac'),
               const SizedBox(height: 16),
-              TextField(
-                controller: _donationController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Cantidad en LUKAS',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.monetization_on),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: const Text(
+                  'Nota: Puedes llegar en transporte público o vehículo propio. Hay estacionamiento disponible.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.blue,
+                  ),
                 ),
               ),
             ],
@@ -592,23 +642,19 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancelar'),
+              child: const Text('Cerrar'),
             ),
             ElevatedButton(
               onPressed: () {
-                final amount = double.tryParse(_donationController.text) ?? 0;
-                if (amount > 0) {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('¡Gracias por donar $amount LUKAS!'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                  _donationController.clear();
-                }
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Función de GPS/Maps próximamente'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
               },
-              child: const Text('Donar'),
+              child: const Text('Abrir GPS'),
             ),
           ],
         );

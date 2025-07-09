@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'RankingScreen.dart';
-import 'store_screen.dart';
-import 'profile_screen.dart';
+import '../services/user_manager.dart';
+import '../screens/home_screen.dart';
+import '../screens/RankingScreen.dart';
+import '../screens/store_screen.dart';
+import '../screens/profile_screen.dart';
+import '../screens/qrscanscreen.dart';
 
-class CustomBottomNavigation extends StatelessWidget {
+class SimpleBottomNavigation extends StatelessWidget {
   final int currentIndex;
   final bool isDarkMode;
 
-  const CustomBottomNavigation({
+  const SimpleBottomNavigation({
     Key? key,
     required this.currentIndex,
     this.isDarkMode = false,
@@ -30,7 +32,7 @@ class CustomBottomNavigation extends StatelessWidget {
       ),
       child: BottomNavigationBar(
         currentIndex: currentIndex,
-        onTap: (index) => _handleNavigation(context, index),
+        onTap: (index) => _navigateToScreen(context, index),
         type: BottomNavigationBarType.fixed,
         backgroundColor: isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
         selectedItemColor: Colors.blue,
@@ -57,7 +59,7 @@ class CustomBottomNavigation extends StatelessWidget {
               height: 24,
               color: currentIndex == 1 ? Colors.blue : (isDarkMode ? Colors.grey.shade400 : Colors.grey),
             ),
-            label: 'Ranking', // Cambiado de 'Campañas' a 'Ranking'
+            label: 'Ranking',
           ),
           BottomNavigationBarItem(
             icon: Container(
@@ -98,50 +100,93 @@ class CustomBottomNavigation extends StatelessWidget {
     );
   }
 
-  void _handleNavigation(BuildContext context, int index) {
+  void _navigateToScreen(BuildContext context, int index) {
+    // No hacer nada si ya estamos en la pantalla actual
+    if (index == currentIndex) return;
+
     switch (index) {
-      case 0:
-        if (currentIndex != 0) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-            (route) => false,
-          );
-        }
+      case 0: // Home
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
         break;
-      case 1:
-        if (currentIndex != 1) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const RankingScreen()),
-          );
-        }
+        
+      case 1: // Ranking
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const RankingScreen()),
+        );
         break;
-      case 2:
-        // QR Scanner - próximamente
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('QR Scanner - Próximamente'),
-            duration: Duration(seconds: 1),
+        
+      case 2: // QR Scanner
+        _handleQRScan(context);
+        break;
+        
+      case 3: // Tienda
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StoreScreen(
+              initialBalance: UserManager.balance,
+            ),
           ),
         );
         break;
-      case 3:
-        if (currentIndex != 3) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const StoreScreen()),
-          );
-        }
-        break;
-      case 4:
-        if (currentIndex != 4) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const ProfileScreen()),
-          );
-        }
+        
+      case 4: // Perfil
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfileScreen()),
+        );
         break;
     }
   }
+
+  void _handleQRScan(BuildContext context) async {
+    try {
+      final result = await Navigator.push<int>(
+        context,
+        MaterialPageRoute(builder: (context) => const QRScannerScreen()),
+      );
+
+      if (result != null && result > 0) {
+        // Mostrar mensaje de éxito
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Image.asset(
+                  'assets/images/luka_moneda.png',
+                  width: 24,
+                  height: 24,
+                ),
+                const SizedBox(width: 8),
+                Text('¡Ganaste $result Luka Points!'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      // Manejar errores del QR scanner
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error al abrir el escáner QR'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+}
+
+// Función helper para usar en cualquier pantalla
+Widget buildBottomNavigation(BuildContext context, int currentIndex, {bool isDarkMode = false}) {
+  return SimpleBottomNavigation(
+    currentIndex: currentIndex,
+    isDarkMode: isDarkMode,
+  );
 }

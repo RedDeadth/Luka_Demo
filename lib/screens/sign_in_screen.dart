@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/background_widget.dart';
+import '../services/supabase_service.dart';
+import '../services/user_manager.dart';
 import 'sign_up_screen.dart';
 import 'home_screen.dart';
 
@@ -14,6 +16,7 @@ class _SignInScreenState extends State<SignInScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +80,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         child: TextField(
                           controller: _emailController,
                           decoration: const InputDecoration(
-                            hintText: 'www.correo@gmail.com',
+                            hintText: 'juan@test.com',
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(vertical: 16),
                           ),
@@ -107,7 +110,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           controller: _passwordController,
                           obscureText: _obscurePassword,
                           decoration: const InputDecoration(
-                            hintText: '••••••••••',
+                            hintText: '123456',
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(vertical: 16),
                           ),
@@ -130,6 +133,53 @@ class _SignInScreenState extends State<SignInScreen> {
                 
                 const SizedBox(height: 16),
                 
+                // Botón de demo rápido
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.shade200),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Demo rápido:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'juan@test.com / 123456',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () {
+                          _emailController.text = 'juan@test.com';
+                          _passwordController.text = '123456';
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.orange,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Usar datos demo',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                
                 // Olvidaste contraseña
                 Align(
                   alignment: Alignment.centerRight,
@@ -144,18 +194,11 @@ class _SignInScreenState extends State<SignInScreen> {
                 
                 const SizedBox(height: 24),
                 
-                // Botón Ingresar - Navega al Home
+                // Botón Ingresar - Conectado a Supabase
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // Aquí puedes agregar validación de login más tarde
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (context) => const HomeScreen()),
-                        (route) => false,
-                      );
-                    },
+                    onPressed: _isLoading ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
@@ -164,10 +207,12 @@ class _SignInScreenState extends State<SignInScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
-                      'Ingresar',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Ingresar',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          ),
                   ),
                 ),
                 
@@ -214,6 +259,55 @@ class _SignInScreenState extends State<SignInScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _handleLogin() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      _showMessage('Por favor completa todos los campos');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Login usando el servicio
+      final user = await SupabaseService.loginUser(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+
+      if (user != null) {
+        // Guardar usuario en UserManager
+        UserManager.setUser(user);
+
+        // Obtener cuenta del usuario
+        final account = await SupabaseService.getUserAccount(user['id']);
+        if (account != null) {
+          UserManager.setAccount(account);
+        }
+
+        // Navegar al Home
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false,
+          );
+        }
+      } else {
+        _showMessage('Email o contraseña incorrectos');
+      }
+    } catch (e) {
+      _showMessage('Error de conexión: $e');
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 }

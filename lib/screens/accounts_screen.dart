@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/supabase_service.dart';
+import '../services/user_manager.dart';
 
 class AccountsScreen extends StatefulWidget {
   const AccountsScreen({Key? key}) : super(key: key);
@@ -8,6 +10,48 @@ class AccountsScreen extends StatefulWidget {
 }
 
 class _AccountsScreenState extends State<AccountsScreen> {
+  List<Map<String, dynamic>> _accounts = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAccounts();
+  }
+
+  Future<void> _loadAccounts() async {
+    setState(() => _isLoading = true);
+
+    try {
+      // Cargar cuenta del usuario actual
+      final account = await SupabaseService.getUserAccount(UserManager.userId);
+      
+      if (account != null) {
+        setState(() {
+          _accounts = [account]; // Por ahora solo una cuenta por usuario
+        });
+      }
+    } catch (e) {
+      print('Error cargando cuentas: $e');
+      // Mostrar datos por defecto si falla
+      _loadDefaultAccounts();
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+  void _loadDefaultAccounts() {
+    _accounts = [
+      {
+        'id': 1,
+        'numero_cuenta': 'CTA${UserManager.userId.toString().padLeft(6, '0')}',
+        'saldo': UserManager.balance,
+        'estado': 'activa',
+        'user_id': UserManager.userId,
+      }
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,7 +64,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Cuentas',
+          'Mis Cuentas',
           style: TextStyle(
             color: Colors.black,
             fontSize: 18,
@@ -30,95 +74,140 @@ class _AccountsScreenState extends State<AccountsScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_horiz, color: Colors.black),
-            onPressed: () {},
+            icon: const Icon(Icons.refresh, color: Colors.black),
+            onPressed: _loadAccounts,
           ),
         ],
       ),
-      body: Column(
-        children: [
-          const SizedBox(height: 20),
-          
-          // Lista de cuentas
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
               children: [
-                _buildAccountItem(
-                  'Tecsup',
-                  'Expira en 6 meses',
-                  '12.01',
-                  '123456789',
-                  Colors.pink.shade100,
-                  'EH',
+                const SizedBox(height: 20),
+                
+                // Información del usuario
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 25,
+                        backgroundColor: Colors.blue.shade100,
+                        child: Text(
+                          UserManager.userName.isNotEmpty 
+                              ? UserManager.userName.substring(0, 1).toUpperCase()
+                              : 'U',
+                          style: TextStyle(
+                            color: Colors.blue.shade700,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              UserManager.userName,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            Text(
+                              UserManager.userEmail,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
-                _buildAccountItem(
-                  'Cerro Verde',
-                  'Expiration in 7 days',
-                  '12.01',
-                  '123456789',
-                  Colors.grey.shade300,
-                  '',
+                
+                const SizedBox(height: 20),
+                
+                // Lista de cuentas
+                Expanded(
+                  child: _accounts.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No tienes cuentas disponibles',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: _accounts.length,
+                          itemBuilder: (context, index) {
+                            final account = _accounts[index];
+                            return _buildAccountItem(account);
+                          },
+                        ),
                 ),
-                const SizedBox(height: 16),
-                _buildAccountItem(
-                  'Tecsup',
-                  'Expiration in 7 days',
-                  '12.01',
-                  '123456789',
-                  Colors.grey.shade300,
-                  '',
+                
+                // Botón transferir entre cuentas
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _accounts.length > 1 ? () {
+                        _showTransferDialog();
+                      } : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _accounts.length > 1 ? Colors.blue : Colors.grey,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        _accounts.length > 1 
+                            ? 'Transferir entre cuentas'
+                            : 'Solo tienes una cuenta',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-          
-          // Botón transferir entre cuentas
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  _showTransferDialog();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Transferir entre cuentas',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
-  Widget _buildAccountItem(
-    String name,
-    String expiration,
-    String amount,
-    String accountNumber,
-    Color avatarColor,
-    String initials,
-  ) {
+  Widget _buildAccountItem(Map<String, dynamic> account) {
+    final accountNumber = account['numero_cuenta'] ?? 'CTA${account['id'].toString().padLeft(6, '0')}';
+    final balance = (account['saldo'] ?? 0.0).toDouble();
+    final status = account['estado'] ?? 'activa';
+    final isActive = status == 'activa';
+
     return Container(
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isActive ? Colors.green.shade200 : Colors.grey.shade300,
+          width: 2,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
@@ -130,22 +219,19 @@ class _AccountsScreenState extends State<AccountsScreen> {
       ),
       child: Row(
         children: [
-          // Avatar
+          // Avatar de cuenta
           Container(
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: avatarColor,
+              color: isActive ? Colors.green.shade100 : Colors.grey.shade200,
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Text(
-                initials,
-                style: TextStyle(
-                  color: initials.isEmpty ? Colors.grey : Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: Icon(
+                isActive ? Icons.account_balance_wallet : Icons.block,
+                color: isActive ? Colors.green.shade700 : Colors.grey.shade600,
+                size: 24,
               ),
             ),
           ),
@@ -158,7 +244,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
+                  'Cuenta Principal',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -167,39 +253,64 @@ class _AccountsScreenState extends State<AccountsScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  expiration,
+                  'N° $accountNumber',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     color: Colors.grey.shade600,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  accountNumber,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                Row(
+                  children: [
+                    Icon(
+                      isActive ? Icons.check_circle : Icons.pause_circle,
+                      size: 16,
+                      color: isActive ? Colors.green : Colors.orange,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      isActive ? 'Activa' : 'Suspendida',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isActive ? Colors.green : Colors.orange,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
           
           // Monto y moneda
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Image.asset(
-                'assets/images/luka_moneda.png',
-                width: 20,
-                height: 20,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/luka_moneda.png',
+                    width: 20,
+                    height: 20,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    balance.toStringAsFixed(0),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isActive ? Colors.green.shade700 : Colors.grey.shade600,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 4),
+              const SizedBox(height: 4),
               Text(
-                amount,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                'LUKAS',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
                 ),
               ),
             ],
@@ -215,7 +326,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Transferir entre cuentas'),
-          content: const Text('Esta función estará disponible próximamente.'),
+          content: const Text('Esta función estará disponible cuando tengas múltiples cuentas activas.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),

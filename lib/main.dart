@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
-//import 'package:flutter/services.dart';
+import 'services/supabase_service.dart';
 import 'screens/splash_screen.dart';
 
-void main() {
-  runApp(const LukaApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inicializar Supabase
+  await SupabaseService.initialize();
+  
+  runApp(const MyApp());
 }
 
-class LukaApp extends StatelessWidget {
-  const LukaApp({Key? key}) : super(key: key);
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Luka',
+      title: 'Luka App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: 'Roboto',
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
       ),
       home: const SplashScreen(),
     );

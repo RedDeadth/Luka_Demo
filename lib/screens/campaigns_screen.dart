@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/supabase_service.dart';
+import '../services/user_manager.dart';
 import 'campaign_detail_screen.dart';
 import 'bottom_navigation_widget.dart';
 
@@ -10,8 +12,69 @@ class CampaignsScreen extends StatefulWidget {
 }
 
 class _CampaignsScreenState extends State<CampaignsScreen> {
+  List<Map<String, dynamic>> _campaigns = [];
+  bool _isLoading = true;
+  double _userBalance = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+
+    try {
+      // Cargar campañas desde la base de datos
+      final campaigns = await SupabaseService.getCampaigns();
+      
+      // Obtener saldo del usuario
+      _userBalance = UserManager.balance;
+
+      setState(() {
+        _campaigns = campaigns;
+      });
+    } catch (e) {
+      print('Error cargando campañas: $e');
+      // Usar campañas por defecto si falla la conexión
+      _loadDefaultCampaigns();
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+  void _loadDefaultCampaigns() {
+    _campaigns = [
+      {
+        'id': 1,
+        'nombre': 'Limpieza de Playas',
+        'descripcion': 'Únete a nuestra campaña de limpieza de playas y ayuda a proteger el medio ambiente.',
+        'presupuesto': 2000.0,
+        'fecha_inicio': '2025-07-15',
+        'fecha_fin': '2025-07-30',
+        'lugar': 'Playa Costa Verde',
+      },
+      {
+        'id': 2,
+        'nombre': 'Reforestación',
+        'descripcion': 'Plantación de árboles en el campus universitario.',
+        'presupuesto': 1500.0,
+        'fecha_inicio': '2025-08-01',
+        'fecha_fin': '2025-08-15',
+        'lugar': 'Campus TecSup',
+      },
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
       appBar: AppBar(
@@ -59,9 +122,9 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
                     color: Colors.black87,
                   ),
                 ),
-                const Text(
-                  '1,500',
-                  style: TextStyle(
+                Text(
+                  _userBalance.toStringAsFixed(0),
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.green,
@@ -79,137 +142,93 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
           
           const SizedBox(height: 20),
           
-          // PRIMERA CAMPAÑA - Donación de Ropa
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CampaignDetailScreen(
-                    title: 'Donación de Ropa para Comunidades',
-                    logo: 'images (3).jpg',
-                    description: 'Ayuda a familias necesitadas donando ropa en buen estado. Tu contribución puede hacer la diferencia en la vida de muchas personas.',
-                    targetAmount: '5000',
-                    currentAmount: '3200',
-                    daysLeft: '15',
-                    participants: '127',
-                  ),
+          // Lista de campañas de la base de datos
+          if (_campaigns.isEmpty)
+            const Center(
+              child: Text(
+                'No hay campañas disponibles',
+                style: TextStyle(color: Colors.grey),
+              ),
+            )
+          else
+            ..._campaigns.map((campaign) => Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CampaignDetailScreen(
+                        title: campaign['nombre'] ?? 'Campaña',
+                        logo: 'images (3).jpg', // Logo por defecto
+                        description: campaign['descripcion'] ?? 'Sin descripción',
+                        targetAmount: (campaign['presupuesto'] ?? 0).toStringAsFixed(0),
+                        currentAmount: _calculateProgress(campaign['presupuesto'] ?? 0),
+                        daysLeft: _calculateDaysLeft(campaign['fecha_fin']),
+                        participants: '127', // Valor por defecto
+                      ),
+                    ),
+                  );
+                },
+                child: _buildCampaignCard(
+                  campaign['nombre'] ?? 'Campaña',
+                  campaign['descripcion'] ?? 'Sin descripción',
+                  _getProgressAmount(campaign['presupuesto'] ?? 0),
+                  (campaign['presupuesto'] ?? 0).toInt(),
+                  int.parse(_calculateDaysLeft(campaign['fecha_fin'])),
+                  127, // Participantes por defecto
+                  _getCampaignImage(campaign['nombre']),
+                  _getCampaignColor(campaign['id'] ?? 1),
                 ),
-              );
-            },
-            child: _buildCampaignCard(
-              'Donación de Ropa para Comunidades',
-              'Ayuda a familias necesitadas',
-              3200,
-              5000,
-              15,
-              127,
-              'images (3).jpg',
-              Colors.blue,
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // SEGUNDA CAMPAÑA - Limpieza de Playas
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CampaignDetailScreen(
-                    title: 'Limpieza de Playas',
-                    logo: 'logo OFICIAL azul 2023 (1)_Mesa de trabajo 1 copia 4.png',
-                    description: 'Únete a nuestra campaña de limpieza de playas y ayuda a proteger el medio ambiente. Juntos podemos hacer un cambio.',
-                    targetAmount: '3000',
-                    currentAmount: '1800',
-                    daysLeft: '8',
-                    participants: '89',
-                  ),
-                ),
-              );
-            },
-            child: _buildCampaignCard(
-              'Limpieza de Playas',
-              'Protege el medio ambiente',
-              1800,
-              3000,
-              8,
-              89,
-              'logo OFICIAL azul 2023 (1)_Mesa de trabajo 1 copia 4.png',
-              Colors.green,
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // TERCERA CAMPAÑA - Educación para Niños
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CampaignDetailScreen(
-                    title: 'Educación para Niños',
-                    logo: 'southernPerucuadrado.png',
-                    description: 'Apoya la educación de niños en zonas rurales. Tu donación ayudará a comprar materiales escolares y libros.',
-                    targetAmount: '8000',
-                    currentAmount: '4500',
-                    daysLeft: '22',
-                    participants: '203',
-                  ),
-                ),
-              );
-            },
-            child: _buildCampaignCard(
-              'Educación para Niños',
-              'Materiales escolares',
-              4500,
-              8000,
-              22,
-              203,
-              'southernPerucuadrado.png',
-              Colors.orange,
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // CUARTA CAMPAÑA - Reforestación Urbana
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CampaignDetailScreen(
-                    title: 'Reforestación Urbana',
-                    logo: 'tt.png',
-                    description: 'Ayuda a plantar árboles en la ciudad para mejorar la calidad del aire y crear espacios verdes.',
-                    targetAmount: '6000',
-                    currentAmount: '2100',
-                    daysLeft: '30',
-                    participants: '156',
-                  ),
-                ),
-              );
-            },
-            child: _buildCampaignCard(
-              'Reforestación Urbana',
-              'Planta árboles en la ciudad',
-              2100,
-              6000,
-              30,
-              156,
-              'tt.png',
-              Colors.teal,
-            ),
-          ),
+              ),
+            )).toList(),
         ],
       ),
       
-      // Bottom Navigation con índice 1 (Campañas)
-      bottomNavigationBar: const CustomBottomNavigation(currentIndex: 1),
+      bottomNavigationBar: const SimpleBottomNavigation(currentIndex: 1),
     );
+  }
+
+  String _calculateProgress(double budget) {
+    // Simular progreso entre 40% y 80%
+    final progress = 0.4 + (0.4 * (budget / 5000));
+    return (budget * progress).toInt().toString();
+  }
+
+  int _getProgressAmount(double budget) {
+    final progress = 0.4 + (0.4 * (budget / 5000));
+    return (budget * progress).toInt();
+  }
+
+  String _calculateDaysLeft(String? endDate) {
+    if (endDate == null) return '30';
+    
+    try {
+      final end = DateTime.parse(endDate);
+      final now = DateTime.now();
+      final difference = end.difference(now).inDays;
+      return difference > 0 ? difference.toString() : '0';
+    } catch (e) {
+      return '30';
+    }
+  }
+
+  String _getCampaignImage(String? name) {
+    if (name == null) return 'images (3).jpg';
+    
+    final imageMap = {
+      'Limpieza de Playas': 'logo OFICIAL azul 2023 (1)_Mesa de trabajo 1 copia 4.png',
+      'Reforestación': 'tt.png',
+      'Donación de Ropa': 'images (3).jpg',
+      'Educación para Niños': 'southernPerucuadrado.png',
+    };
+    
+    return imageMap[name] ?? 'images (3).jpg';
+  }
+
+  Color _getCampaignColor(int id) {
+    final colors = [Colors.blue, Colors.green, Colors.orange, Colors.teal, Colors.purple];
+    return colors[id % colors.length];
   }
 
   Widget _buildCampaignCard(
@@ -222,7 +241,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
     String imageName,
     Color color,
   ) {
-    double progress = currentAmount / targetAmount;
+    double progress = targetAmount > 0 ? currentAmount / targetAmount : 0;
     
     return Container(
       padding: const EdgeInsets.all(16),
@@ -255,6 +274,9 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
                     'assets/images/$imageName',
                     width: 35,
                     height: 35,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(Icons.campaign, color: color, size: 35);
+                    },
                   ),
                 ),
               ),
@@ -273,7 +295,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      subtitle,
+                      subtitle.length > 50 ? '${subtitle.substring(0, 50)}...' : subtitle,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -311,7 +333,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
             children: [
               Expanded(
                 child: LinearProgressIndicator(
-                  value: progress,
+                  value: progress > 1.0 ? 1.0 : progress,
                   backgroundColor: Colors.grey.shade200,
                   valueColor: AlwaysStoppedAnimation<Color>(color),
                   minHeight: 6,

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/supabase_service.dart';
+import '../services/user_manager.dart';
 import 'RankingScreen.dart';
 import 'campaigns_screen.dart';
 import 'accounts_screen.dart';
@@ -21,16 +23,60 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   int _notificationCount = 4;
-  double _lukaPoints = 15.0; // Cambiado a 1.5M en valor real
-  List<TransactionData> _transactions = []; // Lista de transacciones dinámicas
+  double _lukaPoints = 0.0; // Ahora viene de la base de datos
+  List<TransactionData> _transactions = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _initializeTransactions();
+    _loadUserData();
   }
 
-  void _initializeTransactions() {
+  Future<void> _loadUserData() async {
+    setState(() => _isLoading = true);
+
+    try {
+      // Obtener saldo actual del usuario
+      if (UserManager.isLoggedIn) {
+        final account = await SupabaseService.getUserAccount(UserManager.userId);
+        if (account != null) {
+          UserManager.setAccount(account);
+          setState(() {
+            _lukaPoints = UserManager.balance;
+          });
+        }
+
+        // Cargar transacciones recientes
+        final transactions = await SupabaseService.getRecentTransactions(UserManager.userId);
+        _updateTransactionsList(transactions);
+      }
+    } catch (e) {
+      print('Error cargando datos: $e');
+      // Cargar datos por defecto si falla la conexión
+      _initializeDefaultTransactions();
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+  void _updateTransactionsList(List<Map<String, dynamic>> transactions) {
+    setState(() {
+      _transactions = transactions.map((t) {
+        final isPositive = (t['total'] as num) > 0;
+        return TransactionData(
+          icon: isPositive ? 'ingreso.png' : 'egreso.png',
+          title: isPositive ? 'Ingreso' : 'Compra realizada',
+          time: _formatDateTime(t['fecha_venta']),
+          amount: '${isPositive ? '+' : '-'}${(t['total'] as num).abs().toStringAsFixed(0)}',
+          color: isPositive ? Colors.green : Colors.red,
+          description: 'Transacción #${t['id']}',
+        );
+      }).toList();
+    });
+  }
+
+  void _initializeDefaultTransactions() {
     _transactions = [
       TransactionData(
         icon: 'egreso.png',
@@ -59,15 +105,64 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
   }
 
+  String _formatDateTime(String? dateStr) {
+    if (dateStr == null) return 'Hoy';
+    try {
+      final date = DateTime.parse(dateStr);
+      final now = DateTime.now();
+      final difference = now.difference(date).inDays;
+      
+      if (difference == 0) return 'Hoy - ${_formatTime(date)}';
+      if (difference == 1) return 'Ayer - ${_formatTime(date)}';
+      return '${date.day}/${date.month} - ${_formatTime(date)}';
+    } catch (e) {
+      return 'Hoy';
+    }
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final hour = dateTime.hour;
+    final minute = dateTime.minute;
+    final amPm = hour >= 12 ? 'pm' : 'am';
+    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    return '${displayHour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}$amPm';
+  }
+
+  // Método para actualizar saldo después de compras/escaneos
+  Future<void> _updateBalance(double newBalance) async {
+    try {
+      // Actualizar en la base de datos
+      await SupabaseService.updateAccountBalance(UserManager.accountId, newBalance);
+      
+      // Actualizar localmente
+      UserManager.updateBalance(newBalance);
+      
+      setState(() {
+        _lukaPoints = newBalance;
+      });
+    } catch (e) {
+      print('Error actualizando saldo: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF8F8F8),
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Header con perfil y notificación
+              // Header con perfil y notificación - DATOS REALES
               Container(
                 padding: const EdgeInsets.all(20),
                 child: Row(
@@ -78,25 +173,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         CircleAvatar(
                           radius: 25,
                           backgroundColor: Colors.grey.shade300,
-                          backgroundImage: AssetImage(
-                            'assets/images/person.jpg',
-                          ),
+                          backgroundImage: const AssetImage('assets/images/person.jpg'),
                         ),
                         const SizedBox(width: 12),
-                        const Column(
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Carlos Márquez',
-                              style: TextStyle(
+                              UserManager.userName.isNotEmpty ? UserManager.userName : 'Usuario',
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
                               ),
                             ),
                             Text(
-                              'ID: 67823020',
-                              style: TextStyle(
+                              'ID: ${UserManager.userId}',
+                              style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey,
                               ),
@@ -195,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: _buildCategoryIcon(
                         'Emitir Lukitas',
                         'emitir_lukitas.png',
-                      ), // Puedes usar un ícono custom
+                      ),
                     ),
                     GestureDetector(
                       onTap: () {
@@ -225,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 30),
 
-              // Saldo actual - AHORA ES DINÁMICO
+              // Saldo actual - CONECTADO A LA BASE DE DATOS
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
@@ -242,9 +335,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       children: [
                         Text(
-                          _formatLukaPoints(
-                            _lukaPoints,
-                          ), // Ahora usa la función de formateo
+                          _formatLukaPoints(_lukaPoints),
                           style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
@@ -278,16 +369,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: _buildSectionHeader('Mis Cuentas', 'Ver todo'),
               ),
 
-              // Tarjeta Tecsup
+              // Información de cuenta real
               _buildAccountCard(
                 'tecsup.png',
-                'Donación de ropa',
-                'Porcentaje de la meta alcanzado',
-                '10',
+                'Cuenta: ${UserManager.accountNumber}',
+                'Saldo actual',
+                _lukaPoints.toStringAsFixed(0),
                 Colors.blue,
               ),
 
-              // Tarjeta Cerro Verde
+              // Tarjeta adicional (puedes personalizar o quitar)
               _buildAccountCard(
                 'cerro_verde.png',
                 'Estado de la campaña',
@@ -298,7 +389,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 20),
 
-              // Últimas Transacciones con navegación
+              // Últimas Transacciones - DATOS REALES
               GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -311,33 +402,37 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: _buildSectionHeader('Últimas Transacciones', 'Ver todo'),
               ),
 
-              // Lista de transacciones dinámicas
-              ..._transactions
-                  .map(
-                    (transaction) => GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => TransferSuccessScreen(
-                                  title: transaction.title,
-                                  amount: transaction.amount,
-                                  description: transaction.description,
-                                ),
-                          ),
-                        );
-                      },
-                      child: _buildTransactionItem(
-                        transaction.icon,
-                        transaction.title,
-                        transaction.time,
-                        transaction.amount,
-                        transaction.color,
+              // Lista de transacciones de la base de datos
+              if (_transactions.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  child: const Text(
+                    'No hay transacciones recientes',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
+              else
+                ..._transactions.map((transaction) => GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TransferSuccessScreen(
+                          title: transaction.title,
+                          amount: transaction.amount,
+                          description: transaction.description,
+                        ),
                       ),
-                    ),
-                  )
-                  .toList(),
+                    );
+                  },
+                  child: _buildTransactionItem(
+                    transaction.icon,
+                    transaction.title,
+                    transaction.time,
+                    transaction.amount,
+                    transaction.color,
+                  ),
+                )).toList(),
 
               const SizedBox(height: 100), // Espacio para el bottom navigation
             ],
@@ -345,7 +440,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // Bottom Navigation Bar
+      // Bottom Navigation Bar - ACTUALIZADO CON CALLBACK
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -378,10 +473,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 );
                 break;
-              // En tu HomeScreen, actualiza la parte del BottomNavigationBar case 2:
-
               case 2:
-                // QR Scanner - Implementación completa y corregida
+                // QR Scanner - CON CALLBACK DE ACTUALIZACIÓN
                 final result = await Navigator.push<int>(
                   context,
                   MaterialPageRoute(
@@ -389,50 +482,50 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 );
 
-                // Si se escaneó correctamente y se retornaron puntos
                 if (result != null && result > 0) {
-                  _addLukaPoints(result.toDouble());
-                  _addQRTransaction(result); // Agregar transacción a la lista
+                  final newBalance = _lukaPoints + result;
+                  await _updateBalance(newBalance);
+                  _addQRTransaction(result);
 
-                  // Mostrar mensaje de éxito
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          Image.asset(
-                            'assets/images/luka_moneda.png',
-                            width: 24,
-                            height: 24,
-                          ),
-                          const SizedBox(width: 8),
-                          Text('¡Ganaste $result Luka Points!'),
-                        ],
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            Image.asset(
+                              'assets/images/luka_moneda.png',
+                              width: 24,
+                              height: 24,
+                            ),
+                            const SizedBox(width: 8),
+                            Text('¡Ganaste $result Luka Points!'),
+                          ],
+                        ),
+                        backgroundColor: Colors.green,
+                        duration: const Duration(seconds: 3),
                       ),
-                      backgroundColor: Colors.green,
-                      duration: const Duration(seconds: 3),
-                    ),
-                  );
+                    );
+                  }
                 }
                 break;
               case 3:
+                // Tienda - CON CALLBACK DE ACTUALIZACIÓN
                 final result = await Navigator.push<Map<String, dynamic>>(
                   context,
                   MaterialPageRoute(
-                    builder:
-                        (context) => StoreScreen(
-                          initialBalance: _lukaPoints,
-                          onBalanceUpdated: (newBalance) {
-                            _updateLukaPoints(newBalance);
-                            // Agregar transacción de compra
-                            final amountSpent = _lukaPoints - newBalance;
-                            if (amountSpent > 0) {
-                              _addPurchaseTransaction(
-                                amountSpent,
-                                'Productos de la tienda',
-                              );
-                            }
-                          },
-                        ),
+                    builder: (context) => StoreScreen(
+                      initialBalance: _lukaPoints,
+                      onBalanceUpdated: (newBalance) async {
+                        await _updateBalance(newBalance);
+                        final amountSpent = _lukaPoints - newBalance;
+                        if (amountSpent > 0) {
+                          _addPurchaseTransaction(
+                            amountSpent,
+                            'Productos de la tienda',
+                          );
+                        }
+                      },
+                    ),
                   ),
                 );
                 break;
@@ -531,67 +624,117 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _addQRTransaction(int pointsEarned) {
-    final now = DateTime.now();
-    final timeFormat = _formatTime(now);
+  void _addQRTransaction(int pointsEarned) async {
+  final now = DateTime.now();
+  final timeFormat = _formatTime(now);
 
-    setState(() {
-      // Agregar la nueva transacción al inicio de la lista
-      _transactions.insert(
-        0,
-        TransactionData(
-          icon: 'ingreso.png',
-          title: 'QR Escaneado',
-          time: timeFormat,
-          amount: '+$pointsEarned',
-          color: Colors.green,
-          description: 'Puntos obtenidos por escanear QR',
-        ),
-      );
+  setState(() {
+    // Agregar la nueva transacción al inicio de la lista
+    _transactions.insert(
+      0,
+      TransactionData(
+        icon: 'ingreso.png',
+        title: 'QR Escaneado',
+        time: timeFormat,
+        amount: '+$pointsEarned',
+        color: Colors.green,
+        description: 'Puntos obtenidos por escanear QR',
+      ),
+    );
 
-      // Incrementar notificaciones
-      _notificationCount++;
-    });
+    // Incrementar notificaciones
+    _notificationCount++;
+  });
+
+  // NUEVA FUNCIONALIDAD: Verificar misiones después de escanear QR
+  try {
+    await SupabaseService.onQRScanned(UserManager.userId, pointsEarned);
+  } catch (e) {
+    print('Error verificando misiones después de QR: $e');
   }
+}
 
-  String _formatTime(DateTime dateTime) {
-    final hour = dateTime.hour;
-    final minute = dateTime.minute;
-    final amPm = hour >= 12 ? 'pm' : 'am';
-    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+void _updateLukaPoints(double newBalance) {
+  setState(() {
+    _lukaPoints = newBalance;
+  });
+}
 
-    return 'Hoy - ${displayHour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}$amPm';
+void _addPurchaseTransaction(double amount, String description) async {
+  final now = DateTime.now();
+  final timeFormat = _formatTime(now);
+
+  setState(() {
+    // Agregar la nueva transacción al inicio de la lista
+    _transactions.insert(
+      0,
+      TransactionData(
+        icon: 'egreso.png',
+        title: 'Compra en Tienda',
+        time: timeFormat,
+        amount: '-${amount.toStringAsFixed(0)}',
+        color: Colors.red,
+        description: description,
+      ),
+    );
+
+    // Incrementar notificaciones
+    _notificationCount++;
+  });
+
+  // NUEVA FUNCIONALIDAD: Verificar misiones después de compra
+  try {
+    final completedMissions = await SupabaseService.checkAndCompleteMissions(UserManager.userId);
+    
+    // Mostrar notificación si se completaron misiones
+    if (completedMissions.isNotEmpty) {
+      _showMissionCompletedSnackBar(completedMissions);
+    }
+  } catch (e) {
+    print('Error verificando misiones después de compra: $e');
   }
+}
 
-  void _updateLukaPoints(double newBalance) {
-    setState(() {
-      _lukaPoints = newBalance;
-    });
-  }
-
-  // 2. Agregar método para agregar transacción de compra
-  void _addPurchaseTransaction(double amount, String description) {
-    final now = DateTime.now();
-    final timeFormat = _formatTime(now);
-
-    setState(() {
-      // Agregar la nueva transacción al inicio de la lista
-      _transactions.insert(
-        0,
-        TransactionData(
-          icon: 'egreso.png',
-          title: 'Compra en Tienda',
-          time: timeFormat,
-          amount: '-${amount.toStringAsFixed(0)}',
-          color: Colors.red,
-          description: description,
-        ),
-      );
-
-      // Incrementar notificaciones
-      _notificationCount++;
-    });
-  }
+// Agregar este método también al home_screen.dart
+void _showMissionCompletedSnackBar(List<Map<String, dynamic>> completedMissions) {
+  if (completedMissions.isEmpty) return;
+  
+  final totalPoints = completedMissions.fold<int>(
+    0, 
+    (sum, mission) => sum + (mission['puntos'] as int? ?? 0)
+  );
+  
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          const Icon(Icons.star, color: Colors.amber),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '¡Misión completada! +$totalPoints puntos',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.green,
+      duration: const Duration(seconds: 3),
+      action: SnackBarAction(
+        label: 'Ver',
+        textColor: Colors.white,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const MissionsScreen(),
+            ),
+          );
+        },
+      ),
+    ),
+  );
+}
 
   // Resto de métodos existentes...
   void _showNotificationsModal() {
@@ -599,95 +742,93 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder:
-          (context) => DraggableScrollableSheet(
-            initialChildSize: 0.85,
-            minChildSize: 0.5,
-            maxChildSize: 0.95,
-            builder:
-                (context, scrollController) => Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Row(
+                  children: [
+                    const Text(
+                      'Notifications',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              if (_notificationCount > 0)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
                   ),
-                  child: Column(
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.symmetric(vertical: 12),
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 16,
-                        ),
-                        child: Row(
-                          children: [
-                            const Text(
-                              'Notifications',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            const Spacer(),
-                            IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (_notificationCount > 0)
-                        Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 8,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.orange.shade200),
-                          ),
-                          child: Text(
-                            '$_notificationCount new notifications',
-                            style: TextStyle(
-                              color: Colors.orange.shade700,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      Expanded(
-                        child: ListView.builder(
-                          controller: scrollController,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          itemCount: _getNotifications().length,
-                          itemBuilder: (context, index) {
-                            final notification = _getNotifications()[index];
-                            return _buildNotificationCardModal(notification);
-                          },
-                        ),
-                      ),
-                    ],
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.shade200),
+                  ),
+                  child: Text(
+                    '$_notificationCount new notifications',
+                    style: TextStyle(
+                      color: Colors.orange.shade700,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: _getNotifications().length,
+                  itemBuilder: (context, index) {
+                    final notification = _getNotifications()[index];
+                    return _buildNotificationCardModal(notification);
+                  },
+                ),
+              ),
+            ],
           ),
+        ),
+      ),
     );
   }
 
@@ -963,13 +1104,23 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+          Row(
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Image.asset(
+                'assets/images/luka_moneda.png',
+                width: 20,
+                height: 20,
+              ),
+            ],
           ),
         ],
       ),
